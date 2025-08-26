@@ -66,8 +66,81 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Améliore le rendu sur iOS */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-variation-settings: normal;
+    line-height: 1.6;
+    /* Améliore le scroll sur iOS */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Styles spécifiques pour iPhone et petits écrans */
+  @media screen and (max-width: 480px) {
+    body {
+      font-size: 16px; /* Évite le zoom automatique sur iOS */
+      line-height: 1.5;
+    }
+    
+    input, textarea, select {
+      font-size: 16px !important; /* Évite le zoom sur iOS */
+    }
+    
+    /* Améliore la lisibilité sur petits écrans */
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+    h3 { font-size: 1.125rem; }
+    p { font-size: 0.875rem; }
+  }
+  
+  /* Styles pour iPhone SE et très petits écrans */
+  @media screen and (max-width: 375px) {
+    body {
+      font-size: 15px;
+    }
+    
+    .auth-container {
+      padding: 1rem;
+    }
+    
+    .auth-card {
+      max-width: 100%;
+    }
+  }
+  
+  /* Amélioration de la lisibilité sur tous les écrans */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5em;
+  }
+  
+  p {
+    line-height: 1.7;
+    margin-bottom: 1em;
+  }
+  
+  /* Améliore l'accessibilité des liens et boutons */
+  a, button {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  /* Améliore le focus pour l'accessibilité */
+  *:focus {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
   }
 }
 
@@ -120,15 +193,63 @@
       hsl(var(--card)) 0%, 
       hsl(var(--muted)) 100%);
   }
-}
-
-
-
-@layer base {
-  * {
-    @apply border-border;
+  
+  /* Styles responsive pour les composants d'authentification */
+  .auth-container {
+    @apply min-h-screen flex items-center justify-center py-4 px-4 sm:py-12 sm:px-6 lg:px-8;
   }
-  body {
-    @apply bg-background text-foreground;
+  
+  .auth-card {
+    @apply w-full max-w-md mx-auto;
+  }
+  
+  /* Amélioration des inputs pour mobile */
+  .mobile-input {
+    @apply text-base sm:text-lg;
+    min-height: 44px; /* Taille minimale recommandée pour iOS */
+    /* Améliore l'apparence sur iOS */
+    -webkit-appearance: none;
+    border-radius: 0.75rem;
+  }
+  
+  /* Amélioration des boutons pour mobile */
+  .mobile-button {
+    @apply min-h-[44px] text-base sm:text-lg;
+    touch-action: manipulation;
+    /* Améliore l'apparence sur iOS */
+    -webkit-appearance: none;
+    border-radius: 0.75rem;
+  }
+  
+  /* Styles spécifiques pour iPhone */
+  .iphone-optimized {
+    /* Optimisations pour iPhone */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Améliore les transitions sur mobile */
+  .mobile-transition {
+    @apply transition-all duration-200 ease-out;
+    will-change: transform, opacity;
+  }
+  
+  /* Styles pour les messages d'erreur/succès */
+  .message-banner {
+    @apply rounded-xl border backdrop-blur-sm p-3 sm:p-4;
+    animation: slideInUp 0.3s ease-out;
+  }
+  
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
