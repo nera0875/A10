@@ -139,7 +139,7 @@ export default function PricingPage() {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'premium': return 'border-orange-200 bg-orange-50'
-      case 'standard': return 'border-blue-200 bg-blue-50'
+      case 'standard': return 'border-gray-200 bg-gray-50'
       default: return 'border-gray-200 bg-gray-50'
     }
   }
@@ -157,8 +157,8 @@ export default function PricingPage() {
           {/* 🔄 INDICATEUR TEMPS RÉEL */}
           <div className="flex items-center space-x-3">
             {isLoading && (
-              <div className="flex items-center space-x-2 text-blue-600">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-600 border-t-transparent"></div>
                 <span className="text-sm">Updating...</span>
               </div>
             )}
@@ -428,8 +428,8 @@ export default function PricingPage() {
                 <div className="text-sm text-muted-foreground">GPT-4o Mini pour la plupart des tâches, GPT-4o pour les cas complexes</div>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+            <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
+              <div className="w-2 h-2 rounded-full bg-gray-500 mt-2"></div>
               <div>
                 <div className="font-medium">Optimisez vos prompts</div>
                 <div className="text-sm text-muted-foreground">Des instructions claires réduisent le nombre de tokens nécessaires</div>

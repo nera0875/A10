@@ -254,7 +254,7 @@ export default function SettingsPage() {
               onChange={(e) => setConfig(prev => ({ ...prev, openai_api_key: e.target.value }))}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Obtenez votre clé sur <a href="https://platform.openai.com/api-keys" target="_blank" className="text-blue-600 hover:underline">platform.openai.com</a>
+              Obtenez votre clé sur <a href="https://platform.openai.com/api-keys" target="_blank" className="text-gray-700 hover:underline">platform.openai.com</a>
             </p>
           </div>
           <Button
@@ -300,8 +300,8 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-medium text-blue-900 mb-2">État des connexions</h4>
+          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h4 className="font-medium text-gray-900 mb-2">État des connexions</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
                 <span>Supabase:</span>

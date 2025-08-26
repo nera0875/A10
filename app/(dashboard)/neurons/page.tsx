@@ -371,7 +371,7 @@ export default function NeuronsPage() {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'gpt5': return 'border-purple-200 bg-purple-50 dark:bg-purple-900/20'
-      case 'gpt4o': return 'border-blue-200 bg-blue-50 dark:bg-blue-900/20'
+      case 'gpt4o': return 'border-gray-200 bg-gray-50 dark:bg-gray-900/20'
       default: return 'border-gray-200'
     }
   }
@@ -424,7 +424,7 @@ export default function NeuronsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-3">
-          <Brain className="h-8 w-8 text-blue-600" />
+          <Brain className="h-8 w-8 text-gray-600" />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Neurones IA</h1>
             <p className="text-gray-600">Configuration des modèles et règles d'intelligence artificielle</p>
@@ -567,7 +567,7 @@ export default function NeuronsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Info className="h-5 w-5 text-blue-500 mr-2" />
+                <Info className="h-5 w-5 text-gray-500 mr-2" />
                 Modèle Actuel
               </CardTitle>
             </CardHeader>
@@ -661,9 +661,9 @@ export default function NeuronsPage() {
 
             {/* Formulaire d'ajout de règle */}
             {showAddRule && (
-              <Card className="border-dashed border-2 border-blue-300">
+              <Card className="border-dashed border-2 border-gray-300">
                 <CardHeader>
-                  <CardTitle className="text-base text-blue-600">✨ Nouvelle Règle</CardTitle>
+                  <CardTitle className="text-base text-gray-600">✨ Nouvelle Règle</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

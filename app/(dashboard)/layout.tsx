@@ -18,18 +18,18 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/memories" className="flex items-center space-x-2">
-                <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+                <Brain className="h-6 w-6 sm:h-8 sm:w-8 text-gray-900" />
                 <span className="text-lg sm:text-xl font-bold text-gray-900">A01</span>
               </Link>
               
               {/* Navigation desktop */}
-              <div className="hidden md:flex ml-8 space-x-4">
+              <div className="hidden lg:flex ml-8 space-x-2">
                 <Link href="/memories">
                   <Button variant="ghost" className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
                     <Brain className="h-4 w-4" />
@@ -80,53 +80,57 @@ export default async function DashboardLayout({
           </div>
           
           {/* Navigation mobile */}
-          <div className="md:hidden border-t border-gray-200">
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-50">
-              <Link href="/memories">
-                <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                  <Brain className="h-4 w-4 mr-2" />
-                  Mémoires
-                </Button>
-              </Link>
-              <Link href="/documents">
-                <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Documents
-                </Button>
-              </Link>
-              <Link href="/chat">
-                <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Chat
-                </Button>
-              </Link>
-              <Link href="/neurons">
-                <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                  <Zap className="h-4 w-4 mr-2" />
-                  Neurones
-                </Button>
-              </Link>
-              <Link href="/settings">
-                <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Paramètres
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Prix
-                </Button>
-              </Link>
+          <div className="lg:hidden border-t border-gray-200">
+            <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-50 overflow-x-auto">
+              <div className="flex lg:hidden space-x-2 pb-2 min-w-max">
+                <Link href="/memories">
+                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                    <Brain className="h-4 w-4 mr-1" />
+                    <span className="text-sm">Mémoires</span>
+                  </Button>
+                </Link>
+                <Link href="/documents">
+                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                    <FileText className="h-4 w-4 mr-1" />
+                    <span className="text-sm">Documents</span>
+                  </Button>
+                </Link>
+                <Link href="/chat">
+                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    <span className="text-sm">Chat</span>
+                  </Button>
+                </Link>
+                <Link href="/neurons">
+                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                    <Zap className="h-4 w-4 mr-1" />
+                    <span className="text-sm">Neurones</span>
+                  </Button>
+                </Link>
+                <Link href="/settings">
+                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                    <Settings className="h-4 w-4 mr-1" />
+                    <span className="text-sm">Paramètres</span>
+                  </Button>
+                </Link>
+                <Link href="/pricing">
+                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span className="text-sm">Prix</span>
+                  </Button>
+                </Link>
+              </div>
+              <div className="lg:hidden space-y-1">
+              </div>
               <div className="pt-2 border-t border-gray-200">
-                <span className="block px-3 py-2 text-sm text-gray-600">{user.email}</span>
+                <span className="block px-3 py-2 text-sm text-gray-600 truncate">{user.email}</span>
               </div>
             </div>
           </div>
         </div>
       </nav>
       
-      <main className="max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-2 px-2 sm:py-4 sm:px-4 lg:py-6 lg:px-8">
         {children}
       </main>
     </div>

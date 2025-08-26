@@ -136,10 +136,10 @@ export default function DocumentsPage() {
               accept=".pdf,.txt,.md"
               onChange={handleFileUpload}
               disabled={uploading}
-              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
             />
             {uploading && (
-              <div className="flex items-center space-x-2 text-blue-600">
+              <div className="flex items-center space-x-2 text-gray-600">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm">Traitement en cours...</span>
               </div>
@@ -167,7 +167,7 @@ export default function DocumentsPage() {
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div className="flex items-start space-x-3">
-                    <FileText className="h-5 w-5 text-blue-600 mt-1" />
+                    <FileText className="h-5 w-5 text-gray-600 mt-1" />
                     <div className="flex-1">
                       <h3 className="font-medium text-gray-900">{document.title}</h3>
                       <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
