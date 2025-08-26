@@ -140,19 +140,19 @@ export default function AuthPage() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gray-100/30 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
+      <div className="relative min-h-screen flex items-center justify-center py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-6 sm:space-y-8">
           {/* Logo and branding */}
           <div className="text-center">
-            <div className="flex justify-center mb-6">
-              <div className="flex items-center gap-4 p-4">
-                <Image src="/logo.svg" alt="A01 Logo" width={48} height={48} className="w-12 h-12" />
-                <span className="font-bold text-gray-900 text-3xl tracking-tight">
+            <div className="flex justify-center mb-4 sm:mb-6">
+              <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
+                <Image src="/logo.png" alt="A01 Logo" width={40} height={40} className="w-10 h-10 sm:w-12 sm:h-12" />
+                <span className="font-bold text-gray-900 text-2xl sm:text-3xl tracking-tight">
                   A01
                 </span>
               </div>
             </div>
-            <div className="text-center text-gray-600 text-lg font-medium">
+            <div className="text-center text-gray-600 text-base sm:text-lg font-medium">
               <span>Beyond the limits of AI</span>
             </div>
           </div>
@@ -160,34 +160,34 @@ export default function AuthPage() {
           {/* Main auth card */}
           <div className="relative">
             <div className="absolute inset-0 bg-white/60 rounded-3xl blur-xl opacity-60" />
-            <Card className="relative backdrop-blur-xl bg-white border border-gray-200 shadow-lg rounded-3xl overflow-hidden">
-              <CardHeader className="relative text-center pb-8 pt-8">
-                <CardTitle className="text-3xl font-bold text-gray-900 mb-3">
+            <Card className="relative backdrop-blur-xl bg-white border border-gray-200 shadow-lg rounded-2xl sm:rounded-3xl overflow-hidden">
+              <CardHeader className="relative text-center pb-6 pt-6 sm:pb-8 sm:pt-8 px-4 sm:px-6">
+                <CardTitle className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">
                   Bienvenue
                 </CardTitle>
-                <CardDescription className="text-gray-600 text-lg font-medium">
+                <CardDescription className="text-gray-600 text-base sm:text-lg font-medium">
                   Connectez-vous ou créez un compte pour commencer
                 </CardDescription>
               </CardHeader>
-              <CardContent className="relative px-8 pb-8">
+              <CardContent className="relative px-4 pb-6 sm:px-8 sm:pb-8">
                 <Tabs defaultValue="signin" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1.5 rounded-2xl border border-gray-200 h-12">
+                  <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-gray-200 h-10 sm:h-12">
                     <TabsTrigger 
                       value="signin" 
-                      className="flex-1 h-full flex items-center justify-center text-sm font-semibold transition-colors data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 text-gray-600 rounded-xl px-4"
+                      className="flex-1 h-full flex items-center justify-center text-xs sm:text-sm font-semibold transition-colors data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 text-gray-600 rounded-lg sm:rounded-xl px-2 sm:px-4"
                     >
                       Connexion
                     </TabsTrigger>
                     <TabsTrigger 
                       value="signup" 
-                      className="flex-1 h-full flex items-center justify-center text-sm font-semibold transition-colors data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 text-gray-600 rounded-xl px-4"
+                      className="flex-1 h-full flex items-center justify-center text-xs sm:text-sm font-semibold transition-colors data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 text-gray-600 rounded-lg sm:rounded-xl px-2 sm:px-4"
                     >
                       Inscription
                     </TabsTrigger>
                   </TabsList>
               
-                  <TabsContent value="signup" className="space-y-6 mt-8">
-                    <div className="space-y-6">
+                  <TabsContent value="signup" className="space-y-4 sm:space-y-6 mt-6 sm:mt-8">
+                    <div className="space-y-4 sm:space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="signup-email" className="text-sm font-semibold text-gray-700">
                           Adresse email
@@ -199,7 +199,7 @@ export default function AuthPage() {
                             placeholder="votre@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="pl-4 pr-4 py-4 text-lg bg-white border border-gray-300 rounded-xl focus:border-gray-500 focus:ring-2 focus:ring-gray-200 transition-colors placeholder:text-gray-400"
+                            className="h-12 sm:h-14 px-4 text-base sm:text-lg bg-white border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all placeholder:text-gray-400 text-gray-900 font-medium"
                             required
                           />
                         </div>
@@ -215,7 +215,7 @@ export default function AuthPage() {
                             placeholder="Mot de passe"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="pl-4 pr-12 py-4 text-lg bg-white border border-gray-300 rounded-xl focus:border-gray-500 focus:ring-2 focus:ring-gray-200 transition-colors placeholder:text-gray-400"
+                            className="h-12 sm:h-14 pl-4 pr-12 text-base sm:text-lg bg-white border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all placeholder:text-gray-400 text-gray-900 font-medium"
                             required
                           />
                           <button
@@ -231,7 +231,7 @@ export default function AuthPage() {
                     <Button
                       onClick={handleSignUp}
                       disabled={loading}
-                      className="w-full py-4 text-lg font-semibold bg-black hover:bg-gray-800 text-white rounded-xl shadow-sm hover:shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? (
                         <div className="flex items-center gap-3">
@@ -244,8 +244,8 @@ export default function AuthPage() {
                     </Button>
                   </TabsContent>
 
-                  <TabsContent value="signin" className="space-y-6 mt-8">
-                    <div className="space-y-6">
+                  <TabsContent value="signin" className="space-y-4 sm:space-y-6 mt-6 sm:mt-8">
+                    <div className="space-y-4 sm:space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="signin-email" className="text-sm font-semibold text-gray-700">
                           Adresse email
@@ -257,7 +257,7 @@ export default function AuthPage() {
                             placeholder="votre@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="h-12 rounded-xl border border-gray-300 transition-colors bg-white focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+                            className="h-12 sm:h-14 px-4 text-base sm:text-lg rounded-xl border-2 border-gray-300 transition-all bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder:text-gray-400 text-gray-900 font-medium"
                           />
                         </div>
                       </div>
@@ -274,9 +274,10 @@ export default function AuthPage() {
                           <Input
                             id="signin-password"
                             type={showPassword ? "text" : "password"}
+                            placeholder="Mot de passe"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="h-12 rounded-xl border border-gray-300 transition-colors bg-white pr-12 focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+                            className="h-12 sm:h-14 pl-4 pr-12 text-base sm:text-lg rounded-xl border-2 border-gray-300 transition-all bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder:text-gray-400 text-gray-900 font-medium"
                           />
                           <button
                             type="button"
@@ -291,7 +292,7 @@ export default function AuthPage() {
                     <Button
                       onClick={handleSignIn}
                       disabled={loading}
-                      className="w-full h-12 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-colors shadow-sm hover:shadow-md"
+                      className="w-full h-12 sm:h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base sm:text-lg rounded-xl transition-all shadow-sm hover:shadow-md"
                     >
                       {loading ? "Connexion..." : "Se connecter"}
                     </Button>
@@ -300,7 +301,7 @@ export default function AuthPage() {
                 
                 {message && (
                   <div
-                    className={`mt-6 p-4 rounded-xl border backdrop-blur-sm ${
+                    className={`mt-4 sm:mt-6 p-3 sm:p-4 rounded-xl border backdrop-blur-sm ${
                       message.includes('Erreur') 
                         ? 'bg-gradient-to-r from-red-50 to-red-100/50 text-red-800 border-red-200/50' 
                         : 'bg-gradient-to-r from-green-50 to-green-100/50 text-green-800 border-green-200/50'
@@ -310,7 +311,7 @@ export default function AuthPage() {
                       <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
                         message.includes('Erreur') ? 'bg-red-500' : 'bg-green-500'
                       }`} />
-                      <span className="font-medium">{message}</span>
+                      <span className="font-medium text-sm sm:text-base">{message}</span>
                     </div>
                   </div>
                 )}

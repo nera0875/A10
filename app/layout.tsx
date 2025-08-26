@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   description: 'Application A01 avec recherche sémantique et chat intelligent',
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -21,8 +26,8 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           {children}
