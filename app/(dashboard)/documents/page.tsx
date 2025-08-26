@@ -116,9 +116,9 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Mes Documents</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Mes Documents</h1>
       </div>
 
       {/* Upload de documents */}
@@ -130,13 +130,13 @@ export default function DocumentsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
             <Input
               type="file"
               accept=".pdf,.txt,.md"
               onChange={handleFileUpload}
               disabled={uploading}
-              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+              className="w-full file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
             />
             {uploading && (
               <div className="flex items-center space-x-2 text-gray-600">
@@ -164,19 +164,20 @@ export default function DocumentsPage() {
         ) : (
           documents.map((document) => (
             <Card key={document.id}>
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-start space-x-3">
-                    <FileText className="h-5 w-5 text-gray-600 mt-1" />
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">{document.title}</h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+              <CardContent className="pt-4 sm:pt-6">
+                <div className="flex flex-col sm:flex-row justify-between gap-3">
+                  <div className="flex items-start space-x-2 sm:space-x-3 flex-1">
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 mt-0.5 sm:mt-1 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{document.title}</h3>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 mt-1">
                         <span>{document.file_type.toUpperCase()}</span>
                         <span>{formatFileSize(document.file_size)}</span>
-                        <span>Importé le {formatDate(document.created_at)}</span>
+                        <span className="hidden sm:inline">Importé le {formatDate(document.created_at)}</span>
+                        <span className="sm:hidden">{new Date(document.created_at).toLocaleDateString()}</span>
                       </div>
                       {document.content && (
-                        <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                        <p className="text-gray-600 text-xs sm:text-sm mt-2 line-clamp-2">
                           {document.content.substring(0, 200)}...
                         </p>
                       )}
@@ -186,8 +187,10 @@ export default function DocumentsPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => deleteDocument(document.id)}
+                    className="self-end sm:self-start"
                   >
                     <Trash2 className="h-4 w-4" />
+                    <span className="ml-2 sm:hidden">Supprimer</span>
                   </Button>
                 </div>
               </CardContent>

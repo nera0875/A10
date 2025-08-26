@@ -22,6 +22,14 @@ const DEFAULT_CONFIG: ModelConfig = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Vérifier qu'OpenAI est configuré
+    if (!openai) {
+      logger.error('OpenAI n\'est pas configuré', { category: 'Config' })
+      return NextResponse.json({ 
+        error: 'Service temporairement indisponible. Veuillez configurer OpenAI API.' 
+      }, { status: 503 })
+    }
+
     const supabase = createClient()
     
     const { data: { user } } = await supabase.auth.getUser()

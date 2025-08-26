@@ -42,6 +42,28 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+  
+  /* Prevent horizontal scroll on mobile */
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  /* Improve tap targets on mobile */
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+    min-width: 44px;
+    @apply transition-all;
+  }
+  
+  /* Better text rendering on mobile */
+  @media (max-width: 640px) {
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+  }
 }
 
 @layer components {
@@ -85,6 +107,24 @@
   /* Style pour les cartes avec effet hover */
   .card-hover {
     @apply transition-all duration-200 hover:shadow-lg hover:shadow-black/10;
+  }
+  
+  /* Mobile-friendly utilities */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Safe area padding for mobile devices */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
   }
 
   /* Gradient subtil pour les headers */

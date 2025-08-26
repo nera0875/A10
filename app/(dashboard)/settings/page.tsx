@@ -173,10 +173,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div className="flex items-center space-x-2">
-        <Settings className="h-6 w-6" />
-        <h1 className="text-2xl font-bold text-gray-900">Configuration des API</h1>
+        <Settings className="h-5 w-5 sm:h-6 sm:w-6" />
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Configuration des API</h1>
       </div>
 
       {/* Supabase Configuration */}
