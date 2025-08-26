@@ -35,26 +35,26 @@ export function MessageBubble({ message, index }: MessageBubbleProps) {
         duration: 0.3,
         ease: [0.25, 0.46, 0.45, 0.94]
       }}
-      className={`flex gap-4 px-6 py-8 ${isUser ? 'bg-transparent' : 'bg-gray-50/30'} transition-colors`}
+      className={`flex gap-3 sm:gap-4 px-3 sm:px-6 py-4 sm:py-8 ${isUser ? 'bg-transparent' : 'bg-gray-50/30'} transition-colors`}
     >
       {/* Avatar */}
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
         isUser 
           ? 'bg-gray-900 text-white' 
           : 'bg-white border-2 border-gray-200 text-gray-700'
       }`}>
         {isUser ? (
-          <User className="w-4 h-4" />
+          <User className="w-3 h-3 sm:w-4 sm:h-4" />
         ) : (
-          <MessageSquare className="w-4 h-4" />
+          <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4" />
         )}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         {/* Role Label */}
-        <div className="mb-2 flex items-center justify-between">
-          <span className={`text-sm font-semibold ${
+        <div className="mb-2 flex items-center justify-between flex-wrap gap-2">
+          <span className={`text-xs sm:text-sm font-semibold ${
             isUser ? 'text-gray-900' : 'text-gray-700'
           }`}>
             {isUser ? 'You' : 'Assistant'}
@@ -62,18 +62,18 @@ export function MessageBubble({ message, index }: MessageBubbleProps) {
           
           {/* Price Indicator */}
           {message.pricing && (
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-1 sm:gap-2 text-xs text-gray-500">
               {message.pricing.cacheHit && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-full border border-green-200">
-                  <Zap className="w-3 h-3" />
-                  <span>Cache</span>
+                <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-green-50 text-green-700 rounded-full border border-green-200">
+                  <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                  <span className="hidden sm:inline">Cache</span>
                   {message.pricing.cacheSavings && (
                     <span className="font-medium">-{formatCost(message.pricing.cacheSavings)}</span>
                   )}
                 </div>
               )}
-              <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 text-gray-700 rounded-full border border-gray-200">
-                <DollarSign className="w-3 h-3" />
+              <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-50 text-gray-700 rounded-full border border-gray-200">
+                <DollarSign className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 <span className="font-medium">{formatCost(message.pricing.cost)}</span>
               </div>
             </div>
@@ -84,8 +84,8 @@ export function MessageBubble({ message, index }: MessageBubbleProps) {
         <div className="max-w-none">
           {isUser ? (
             <div className="flex justify-end">
-              <div className="max-w-2xl px-5 py-4 rounded-2xl bg-black text-white">
-                <p className="text-base leading-relaxed font-normal">{message.content}</p>
+              <div className="max-w-[85%] sm:max-w-2xl px-3 sm:px-5 py-2.5 sm:py-4 rounded-2xl bg-black text-white">
+                <p className="text-sm sm:text-base leading-relaxed font-normal">{message.content}</p>
               </div>
             </div>
           ) : (
@@ -94,17 +94,17 @@ export function MessageBubble({ message, index }: MessageBubbleProps) {
                 <ReactMarkdown
                   components={{
                     p: ({ children }) => (
-                      <p className="mb-4 last:mb-0 text-base leading-7 text-gray-900 font-normal">
+                      <p className="mb-3 sm:mb-4 last:mb-0 text-sm sm:text-base leading-6 sm:leading-7 text-gray-900 font-normal">
                         {children}
                       </p>
                     ),
                     ul: ({ children }) => (
-                      <ul className="list-disc list-inside mb-4 space-y-2 text-base leading-7 text-gray-900">
+                      <ul className="list-disc list-inside mb-3 sm:mb-4 space-y-1.5 sm:space-y-2 text-sm sm:text-base leading-6 sm:leading-7 text-gray-900">
                         {children}
                       </ul>
                     ),
                     ol: ({ children }) => (
-                      <ol className="list-decimal list-inside mb-4 space-y-2 text-base leading-7 text-gray-900">
+                      <ol className="list-decimal list-inside mb-3 sm:mb-4 space-y-1.5 sm:space-y-2 text-sm sm:text-base leading-6 sm:leading-7 text-gray-900">
                         {children}
                       </ol>
                     ),

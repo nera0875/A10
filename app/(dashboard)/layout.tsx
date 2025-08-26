@@ -2,7 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Brain, FileText, MessageSquare, Settings, TrendingUp, LogOut, Zap, Menu } from 'lucide-react'
+import { Brain, FileText, MessageSquare, Settings, TrendingUp, LogOut, Zap } from 'lucide-react'
+import { MobileNav } from '@/components/navigation/mobile-nav'
 
 export default async function DashboardLayout({
   children,
@@ -19,7 +20,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
@@ -71,66 +72,18 @@ export default async function DashboardLayout({
             
             <div className="flex items-center space-x-2 sm:space-x-4">
               <span className="hidden sm:block text-sm text-gray-600 truncate max-w-32 sm:max-w-none">{user.email}</span>
-              <form action="/auth/signout" method="post">
+              <form action="/auth/signout" method="post" className="hidden lg:block">
                 <Button variant="ghost" size="sm" className="text-gray-700 hover:text-gray-900 hover:bg-gray-100">
                   <LogOut className="h-4 w-4" />
                 </Button>
               </form>
-            </div>
-          </div>
-          
-          {/* Navigation mobile */}
-          <div className="lg:hidden border-t border-gray-200">
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-50 overflow-x-auto">
-              <div className="flex lg:hidden space-x-2 pb-2 min-w-max">
-                <Link href="/memories">
-                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                    <Brain className="h-4 w-4 mr-1" />
-                    <span className="text-sm">Mémoires</span>
-                  </Button>
-                </Link>
-                <Link href="/documents">
-                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                    <FileText className="h-4 w-4 mr-1" />
-                    <span className="text-sm">Documents</span>
-                  </Button>
-                </Link>
-                <Link href="/chat">
-                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                    <MessageSquare className="h-4 w-4 mr-1" />
-                    <span className="text-sm">Chat</span>
-                  </Button>
-                </Link>
-                <Link href="/neurons">
-                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                    <Zap className="h-4 w-4 mr-1" />
-                    <span className="text-sm">Neurones</span>
-                  </Button>
-                </Link>
-                <Link href="/settings">
-                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                    <Settings className="h-4 w-4 mr-1" />
-                    <span className="text-sm">Paramètres</span>
-                  </Button>
-                </Link>
-                <Link href="/pricing">
-                  <Button variant="ghost" className="flex-shrink-0 justify-center px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    <span className="text-sm">Prix</span>
-                  </Button>
-                </Link>
-              </div>
-              <div className="lg:hidden space-y-1">
-              </div>
-              <div className="pt-2 border-t border-gray-200">
-                <span className="block px-3 py-2 text-sm text-gray-600 truncate">{user.email}</span>
-              </div>
+              <MobileNav userEmail={user.email || ''} />
             </div>
           </div>
         </div>
       </nav>
       
-      <main className="max-w-7xl mx-auto py-2 px-2 sm:py-4 sm:px-4 lg:py-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-2 px-3 sm:py-4 sm:px-4 lg:py-6 lg:px-8 safe-bottom">
         {children}
       </main>
     </div>
