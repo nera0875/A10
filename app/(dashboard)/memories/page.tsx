@@ -151,12 +151,12 @@ export default function MemoriesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Mes Mémoires</h1>
-        <Button onClick={() => setShowForm(!showForm)}>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Mes Mémoires</h1>
+        <Button onClick={() => setShowForm(!showForm)} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
-          Nouvelle mémoire
+          <span className="sm:inline">Nouvelle mémoire</span>
         </Button>
       </div>
 
@@ -169,22 +169,26 @@ export default function MemoriesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
               placeholder="Que recherchez-vous ?"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              className="flex-1"
             />
-            <Button onClick={handleSearch}>
-              <Search className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" onClick={() => {
-              setSearchQuery('')
-              fetchMemories()
-            }}>
-              Réinitialiser
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleSearch} className="flex-1 sm:flex-none">
+                <Search className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Rechercher</span>
+              </Button>
+              <Button variant="outline" onClick={() => {
+                setSearchQuery('')
+                fetchMemories()
+              }} className="flex-1 sm:flex-none">
+                <span className="text-xs sm:text-sm">Réinitialiser</span>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -205,11 +209,11 @@ export default function MemoriesPage() {
                 onChange={(e) => setNewMemory(e.target.value)}
                 rows={4}
               />
-              <div className="flex space-x-2">
-                <Button onClick={saveMemory}>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={saveMemory} className="w-full sm:w-auto">
                   {editingMemory ? 'Mettre à jour' : 'Ajouter'}
                 </Button>
-                <Button variant="outline" onClick={cancelEdit}>
+                <Button variant="outline" onClick={cancelEdit} className="w-full sm:w-auto">
                   Annuler
                 </Button>
               </div>
@@ -231,33 +235,37 @@ export default function MemoriesPage() {
         ) : (
           memories.map((memory) => (
             <Card key={memory.id}>
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
+              <CardContent className="pt-4 sm:pt-6">
+                <div className="space-y-3">
                   <div className="flex-1">
-                    <p className="text-gray-900 mb-2">
+                    <p className="text-gray-900 mb-2 text-sm sm:text-base leading-relaxed">
                       {truncateText(memory.content, 300)}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       Créé le {formatDate(memory.created_at)}
                       {memory.updated_at !== memory.created_at && 
                         ` • Modifié le ${formatDate(memory.updated_at)}`
                       }
                     </p>
                   </div>
-                  <div className="flex space-x-2 ml-4">
+                  <div className="flex justify-end space-x-2 pt-2 border-t border-gray-100">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => startEdit(memory)}
+                      className="flex-1 sm:flex-none"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Modifier</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => deleteMemory(memory.id)}
+                      className="flex-1 sm:flex-none"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Supprimer</span>
                     </Button>
                   </div>
                 </div>
