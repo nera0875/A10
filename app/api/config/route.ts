@@ -38,6 +38,8 @@ Règles importantes:
   topP: 1
 }
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const supabase = createClient()

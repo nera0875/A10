@@ -392,7 +392,7 @@ export default function PricingPage() {
                 <div className="text-2xl font-bold text-green-600">
                   {Math.round((usageStats.cacheHits / Math.max(usageStats.totalMessages, 1)) * 100)}%
                 </div>
-                <div className="text-sm text-muted-foreground">Taux de Cache</div>
+                <div className="text-sm text-muted-foreground">Taux de cache</div>
               </div>
               <div className="text-center p-4 border border-green-200 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
@@ -425,7 +425,7 @@ export default function PricingPage() {
               <div className="w-2 h-2 rounded-full bg-yellow-500 mt-2"></div>
               <div>
                 <div className="font-medium">Choisissez le bon modèle</div>
-                <div className="text-sm text-muted-foreground">GPT-5 Nano pour la plupart des tâches, GPT-5 pour les cas complexes</div>
+                <div className="text-sm text-muted-foreground">GPT-4o Mini pour la plupart des tâches, GPT-4o pour les cas complexes</div>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -439,7 +439,7 @@ export default function PricingPage() {
               <div className="w-2 h-2 rounded-full bg-green-500 mt-2"></div>
               <div>
                 <div className="font-medium">Utilisez le cache</div>
-                <div className="text-sm text-muted-foreground">Votre taux de cache de {Math.round((usageStats.cacheHits / Math.max(usageStats.totalMessages, 1)) * 100)}% vous fait déjà économiser !</div>
+                <div className="text-sm text-muted-foreground">Votre taux de cache de {Math.round((usageStats.cacheHits / Math.max(usageStats.totalMessages, 1)) * 100)}% vous fait déj&agrave; économiser !</div>
               </div>
             </div>
           </div>

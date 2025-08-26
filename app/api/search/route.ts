@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { calculateAndSaveUsage, interceptOpenAIUsage, forceUsageRecord } from '@/lib/usage-calculator'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+}) : null
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +20,10 @@ export async function POST(request: NextRequest) {
     
     if (!query?.trim()) {
       return NextResponse.json({ error: 'Requête vide' }, { status: 400 })
+    }
+
+    if (!openai) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
     }
 
     // Générer l'embedding de la requête

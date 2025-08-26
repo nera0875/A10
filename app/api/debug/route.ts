@@ -4,9 +4,9 @@ import OpenAI from 'openai'
 import { logger } from '@/lib/logger'
 import { calculateAndSaveUsage, interceptOpenAIUsage, forceUsageRecord } from '@/lib/usage-calculator'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+}) : null
 
 export async function GET(request: NextRequest) {
   try {
@@ -78,34 +78,42 @@ export async function GET(request: NextRequest) {
         })
 
         // Test 4: Tester OpenAI
-        try {
-          const embeddingResponse = await openai.embeddings.create({
-            model: 'text-embedding-3-small',
-            input: 'test query',
-          })
+        if (openai) {
+          try {
+            const embeddingResponse = await openai.embeddings.create({
+              model: 'text-embedding-3-small',
+              input: 'test query',
+            })
 
-          // Calcul automatique des coûts pour l'embedding de test
-          if (embeddingResponse.usage) {
-            await interceptOpenAIUsage(embeddingResponse, 'text-embedding-3-small', user.id, undefined)
-          } else {
-            // Estimation si pas d'usage retourné
-            const estimatedTokens = Math.ceil('test query'.length / 4)
-            await forceUsageRecord('text-embedding-3-small', estimatedTokens, 0, user.id, undefined)
-          }
-
-          results.tests.push({
-            name: 'OpenAI Embeddings',
-            status: 'success',
-            data: {
-              embeddingLength: embeddingResponse.data[0].embedding.length,
-              model: 'text-embedding-3-small'
+            // Calcul automatique des coûts pour l'embedding de test
+            if (embeddingResponse.usage) {
+              await interceptOpenAIUsage(embeddingResponse, 'text-embedding-3-small', user.id, undefined)
+            } else {
+              // Estimation si pas d'usage retourné
+              const estimatedTokens = Math.ceil('test query'.length / 4)
+              await forceUsageRecord('text-embedding-3-small', estimatedTokens, 0, user.id, undefined)
             }
-          })
-        } catch (openaiError: any) {
+
+            results.tests.push({
+              name: 'OpenAI Embeddings',
+              status: 'success',
+              data: {
+                embeddingLength: embeddingResponse.data[0].embedding.length,
+                model: 'text-embedding-3-small'
+              }
+            })
+          } catch (openaiError: any) {
+            results.tests.push({
+              name: 'OpenAI Embeddings',
+              status: 'error',
+              error: openaiError.message
+            })
+          }
+        } else {
           results.tests.push({
             name: 'OpenAI Embeddings',
-            status: 'error',
-            error: openaiError.message
+            status: 'skipped',
+            message: 'OPENAI_API_KEY not configured'
           })
         }
 

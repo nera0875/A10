@@ -6,9 +6,9 @@ import OpenAI from 'openai'
 import pdf from 'pdf-parse'
 import { calculateAndSaveUsage, interceptOpenAIUsage, forceUsageRecord } from '@/lib/usage-calculator'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+}) : null
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,6 +71,10 @@ export async function POST(request: NextRequest) {
     const chunks = chunkText(content, 400) // ~400 tokens par chunk
     
     // Traiter chaque chunk
+    if (!openai) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
+    }
+
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i]
       

@@ -106,7 +106,7 @@ const DEFAULT_RULES: Rule[] = [
     id: '1',
     name: 'Personnalité de base',
     emoji: '🤖',
-    content: 'Tu es un assistant intelligent qui aide à répondre aux questions en utilisant les mémoires personnelles et documents de l\'utilisateur.',
+    content: 'Tu es un assistant intelligent qui aide à répondre aux questions en utilisant les mémoires personnelles et documents de l&#39;utilisateur.',
     category: 'Identité'
   },
   {
@@ -134,7 +134,7 @@ const DEFAULT_RULES: Rule[] = [
     id: '5',
     name: 'Gestion des Limites',
     emoji: '❓',
-    content: 'Si l\'information n\'est pas dans le contexte, dis-le clairement',
+    content: 'Si l&#39;information n&#39;est pas dans le contexte, dis-le clairement',
     category: 'Limites'
   },
   {
@@ -648,7 +648,7 @@ export default function NeuronsPage() {
                       Règles de Comportement
                     </CardTitle>
                     <CardDescription>
-                      Gérez vos règles : ajoutez, supprimez, modifiez et réorganisez comme vous voulez !
+                      Définissez les règles de comportement de votre assistant d'IA
                     </CardDescription>
                   </div>
                   <Button onClick={() => setShowAddRule(true)} className="shrink-0">

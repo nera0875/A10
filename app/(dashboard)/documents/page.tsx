@@ -16,6 +16,8 @@ export default function DocumentsPage() {
   const supabase = createClient()
 
   const fetchDocuments = useCallback(async () => {
+    if (!supabase) return
+    
     try {
       const { data, error } = await supabase
         .from('documents')
@@ -79,6 +81,7 @@ export default function DocumentsPage() {
 
   const deleteDocument = async (id: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce document et tous ses chunks ?')) return
+    if (!supabase) return
 
     try {
       // Supprimer d'abord les chunks

@@ -52,6 +52,14 @@ export default function ChatPage() {
 
   // Calculer les coûts d'une conversation
   const calculateConversationCosts = async (conversationId: string) => {
+    if (!supabase) {
+      return {
+        totalCost: 0,
+        cacheSavings: undefined,
+        messageCount: 0
+      }
+    }
+    
     try {
       // Récupérer les statistiques d'usage pour cette conversation
       const { data: usageData, error: usageError } = await supabase
@@ -109,6 +117,8 @@ export default function ChatPage() {
 
   // Charger les conversations de l'utilisateur
   const loadConversations = async () => {
+    if (!supabase) return
+    
     try {
       const { data, error } = await supabase
         .from('conversations')
@@ -137,6 +147,8 @@ export default function ChatPage() {
 
   // Charger les messages d'une conversation
   const loadConversationMessages = async (conversationId: string) => {
+    if (!supabase) return
+    
     try {
       const { data, error } = await supabase
         .from('conversation_messages')

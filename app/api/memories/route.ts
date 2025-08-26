@@ -15,9 +15,9 @@ const DEFAULT_CONFIG: ModelConfig = {
   maxTokens: 2000
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+}) : null
 
 // Helper pour charger la config utilisateur
 async function getUserConfig(supabase: any, userId: string): Promise<ModelConfig> {
@@ -77,6 +77,10 @@ export async function POST(request: NextRequest) {
 
     // Charger la configuration utilisateur
     const userConfig = await getUserConfig(supabase, user.id)
+
+    if (!openai) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
+    }
 
     // Générer l'embedding avec OpenAI
     logger.info('Génération embedding pour la mémoire', { category: 'OpenAI' })
@@ -148,6 +152,10 @@ export async function PUT(request: NextRequest) {
 
     // Charger la configuration utilisateur
     const userConfig = await getUserConfig(supabase, user.id)
+
+    if (!openai) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
+    }
 
     // Générer un nouvel embedding pour le contenu modifié
     logger.info('Génération nouvel embedding pour la mémoire', { category: 'OpenAI' })

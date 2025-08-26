@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LogoWithText } from '@/components/ui/logo'
 import { logger } from '@/lib/logger'
+import Image from 'next/image'
 
 import { Eye, EyeOff } from 'lucide-react'
 
@@ -29,6 +30,18 @@ export default function AuthPage() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Si Supabase n'est pas configuré, afficher un message d'erreur
+  if (!supabase) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Configuration requise</h1>
+          <p className="text-gray-600">Les variables d'environnement Supabase ne sont pas configurées.</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleSignIn = async () => {
     setLoading(true)
@@ -133,7 +146,7 @@ export default function AuthPage() {
           <div className="text-center">
             <div className="flex justify-center mb-6">
               <div className="flex items-center gap-4 p-4">
-                <img src="/logo.svg" alt="A01 Logo" className="w-12 h-12" />
+                <Image src="/logo.svg" alt="A01 Logo" width={48} height={48} className="w-12 h-12" />
                 <span className="font-bold text-gray-900 text-3xl tracking-tight">
                   A01
                 </span>

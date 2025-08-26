@@ -6,9 +6,9 @@ import { type ModelConfig } from '../config/route'
 import { calculateAndSaveUsage, interceptOpenAIUsage, forceUsageRecord } from '@/lib/usage-calculator'
 import { ensureUserExists } from '@/lib/ensure-user'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+}) : null
 
 // Configuration par défaut locale
 const DEFAULT_CONFIG: ModelConfig = {
@@ -106,6 +106,10 @@ export async function POST(request: NextRequest) {
     // Générer l'embedding et rechercher seulement si nécessaire
     let queryEmbedding: number[] | null = null
     if (!shouldSkipMemorySearch) {
+      if (!openai) {
+        return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
+      }
+
       // Générer l'embedding de la requête
       logger.info('Génération embedding pour la requête', { 
         category: 'OpenAI', 
@@ -327,6 +331,9 @@ Réponds en utilisant le contexte fourni si pertinent. Ne mentionne jamais les s
       // Générer l'embedding pour le message utilisateur si pas déjà fait
       let userEmbedding = queryEmbedding
       if (!userEmbedding) {
+        if (!openai) {
+          throw new Error('OpenAI API key not configured')
+        }
         const userEmbeddingResponse = await openai.embeddings.create({
           model: userConfig.embeddingModel,
           input: query.trim(),
@@ -415,6 +422,10 @@ Réponds en utilisant le contexte fourni si pertinent. Ne mentionne jamais les s
       completionParams.temperature = userConfig.temperature
       completionParams.top_p = userConfig.topP
       completionParams.max_tokens = userConfig.maxTokens
+    }
+
+    if (!openai) {
+      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
     }
 
     let completion
