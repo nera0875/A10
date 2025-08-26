@@ -105,7 +105,7 @@ export default function LogsPage() {
       case 'success':
         return <CheckCircle className="h-4 w-4 text-green-500" />
       default:
-        return <Info className="h-4 w-4 text-blue-500" />
+        return <Info className="h-4 w-4 text-gray-500" />
     }
   }
 
@@ -118,7 +118,7 @@ export default function LogsPage() {
       case 'success':
         return 'border-l-green-500 bg-green-50'
       default:
-        return 'border-l-blue-500 bg-blue-50'
+        return 'border-l-gray-500 bg-gray-50'
     }
   }
 
@@ -188,7 +188,7 @@ export default function LogsPage() {
 
       {/* Statistiques */}
       <div className="grid grid-cols-5 gap-4">
-        <Card className={`cursor-pointer ${filter === 'all' ? 'ring-2 ring-blue-500' : ''}`} 
+        <Card className={`cursor-pointer ${filter === 'all' ? 'ring-2 ring-gray-500' : ''}`} 
               onClick={() => setFilter('all')}>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-gray-900">{counts.all}</div>
@@ -212,10 +212,10 @@ export default function LogsPage() {
           </CardContent>
         </Card>
         
-        <Card className={`cursor-pointer ${filter === 'info' ? 'ring-2 ring-blue-500' : ''}`} 
+        <Card className={`cursor-pointer ${filter === 'info' ? 'ring-2 ring-gray-500' : ''}`} 
               onClick={() => setFilter('info')}>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{counts.info}</div>
+            <div className="text-2xl font-bold text-gray-600">{counts.info}</div>
             <div className="text-sm text-gray-600">Infos</div>
           </CardContent>
         </Card>

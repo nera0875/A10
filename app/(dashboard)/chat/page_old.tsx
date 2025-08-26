@@ -18,6 +18,8 @@ interface Conversation {
   messageCount?: number
 }
 
+
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -29,9 +31,11 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
   
+  // Alias pour la compatibilité
   const isLoading = loading
   const loadingText = isThinking ? "Réflexion..." : "Génération de la réponse..."
 
+  // Fonction pour formater les coûts
   const formatCost = (cost: number) => {
     if (cost >= 0.01) {
       return `${cost.toFixed(2)}€`
@@ -46,6 +50,7 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  // Calculer les coûts d'une conversation
   const calculateConversationCosts = async (conversationId: string) => {
     if (!supabase) {
       return {
@@ -56,6 +61,7 @@ export default function ChatPage() {
     }
     
     try {
+      // Récupérer les statistiques d'usage pour cette conversation
       const { data: usageData, error: usageError } = await supabase
         .from('usage_stats')
         .select('total_cost, cache_hit, cost_input, cost_output')
@@ -65,6 +71,7 @@ export default function ChatPage() {
         console.error('Erreur récupération usage_stats:', usageError)
       }
       
+      // Récupérer les messages pour compter
       const { data: messagesData, error: messagesError } = await supabase
         .from('conversation_messages')
         .select('id')
@@ -79,15 +86,18 @@ export default function ChatPage() {
       const messageCount = messagesData?.length || 0
       
       if (usageData && usageData.length > 0) {
+        // Utiliser les vraies données de coût
         totalCost = usageData.reduce((sum, record) => sum + parseFloat(record.total_cost || 0), 0)
         
+        // Calculer les économies de cache
         const cacheHits = usageData.filter(record => record.cache_hit).length
         if (cacheHits > 0) {
           const avgCostPerMessage = totalCost / usageData.length
-          totalCacheSavings = cacheHits * avgCostPerMessage * 0.8
+          totalCacheSavings = cacheHits * avgCostPerMessage * 0.8 // 80% d'économie estimée
         }
       } else if (messageCount > 0) {
-        totalCost = messageCount * 0.001
+        // Fallback: estimation basée sur le nombre de messages
+        totalCost = messageCount * 0.001 // Estimation approximative
       }
       
       return {
@@ -105,6 +115,7 @@ export default function ChatPage() {
     }
   }
 
+  // Charger les conversations de l'utilisateur
   const loadConversations = async () => {
     if (!supabase) return
     
@@ -113,9 +124,11 @@ export default function ChatPage() {
         .from('conversations')
         .select('id, title, created_at, updated_at')
         .order('updated_at', { ascending: false })
+        .limit(20)
 
       if (error) throw error
       
+      // Calculer les coûts pour chaque conversation
       const conversationsWithCosts = await Promise.all(
         (data || []).map(async (conv) => {
           const costs = await calculateConversationCosts(conv.id)
@@ -128,10 +141,11 @@ export default function ChatPage() {
       
       setConversations(conversationsWithCosts)
     } catch (error) {
-      console.error('Erreur chargement conversations:', error)
+      console.error('Erreur lors du chargement des conversations:', error)
     }
   }
 
+  // Charger les messages d'une conversation
   const loadConversationMessages = async (conversationId: string) => {
     if (!supabase) return
     
@@ -144,38 +158,32 @@ export default function ChatPage() {
 
       if (error) throw error
       
-      const formattedMessages: ChatMessage[] = (data || []).map((msg, index) => ({
-        id: `${conversationId}-${index}`,
+      const chatMessages: ChatMessage[] = (data || []).map(msg => ({
         role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-        pricing: {
-          inputTokens: Math.floor(msg.content.length / 4),
-          outputTokens: msg.role === 'assistant' ? Math.floor(msg.content.length / 4) : 0,
-          cost: Math.random() * 0.005 + 0.001,
-          cacheHit: Math.random() > 0.5,
-          cacheSavings: Math.random() > 0.5 ? Math.random() * 0.002 : undefined,
-          model: 'GPT-4o'
-        }
+        content: msg.content
       }))
       
-      setMessages(formattedMessages)
+      setMessages(chatMessages)
     } catch (error) {
-      console.error('Erreur chargement messages:', error)
+      console.error('Erreur lors du chargement des messages:', error)
     }
   }
 
+  // Créer une nouvelle conversation
+  const createNewConversation = () => {
+    setCurrentConversationId(null)
+    setMessages([])
+    setShowHistory(false)
+  }
+
+  // Sélectionner une conversation existante
   const selectConversation = (conversationId: string) => {
     setCurrentConversationId(conversationId)
     loadConversationMessages(conversationId)
     setShowHistory(false)
   }
 
-  const createNewConversation = () => {
-    setMessages([])
-    setCurrentConversationId(null)
-    setShowHistory(false)
-  }
-
+  // Mettre à jour les coûts d'une conversation spécifique
   const updateConversationCosts = async (conversationId: string) => {
     if (!conversationId) return
     
@@ -204,10 +212,10 @@ export default function ChatPage() {
       role: 'user',
       content: input.trim(),
       pricing: {
-        inputTokens: Math.floor(input.trim().length / 4),
+        inputTokens: Math.floor(input.trim().length / 4), // Approximation simple
         outputTokens: 0,
-        cost: Math.random() * 0.001 + 0.0001,
-        cacheHit: Math.random() > 0.7,
+        cost: Math.random() * 0.001 + 0.0001, // Coût simulé entre 0.0001 et 0.0011
+        cacheHit: Math.random() > 0.7, // 30% de chance de cache hit
         cacheSavings: Math.random() > 0.7 ? Math.random() * 0.0005 : undefined,
         model: 'GPT-4o'
       }
@@ -219,20 +227,23 @@ export default function ChatPage() {
     setLoading(true)
     setIsThinking(true)
     
+    // Déclencher l'événement pour mettre à jour les stats de pricing
     window.dispatchEvent(new CustomEvent('newMessageSent'))
 
+    // Simuler un délai de thinking
     await new Promise(resolve => setTimeout(resolve, 800))
     setIsThinking(false)
 
+    // Créer le message de l'assistant qui va être streamé
     const assistantMessage: ChatMessage = {
       role: 'assistant',
       content: '',
       sources: [],
       pricing: {
         inputTokens: Math.floor(currentInput.length / 4),
-        outputTokens: 0,
-        cost: Math.random() * 0.005 + 0.001,
-        cacheHit: Math.random() > 0.5,
+        outputTokens: 0, // Sera mis à jour pendant le streaming
+        cost: Math.random() * 0.005 + 0.001, // Coût plus élevé pour l'assistant
+        cacheHit: Math.random() > 0.5, // 50% de chance de cache hit
         cacheSavings: Math.random() > 0.5 ? Math.random() * 0.002 : undefined,
         model: 'GPT-4o'
       }
@@ -277,6 +288,7 @@ export default function ChatPage() {
               const data = JSON.parse(line.slice(6))
               
               if (data.type === 'content' && data.content) {
+                // Streaming immédiat - affichage direct du contenu complet
                 accumulatedContent = data.content
                 
                 setMessages(prev => {
@@ -284,21 +296,26 @@ export default function ChatPage() {
                   const lastMessage = newMessages[newMessages.length - 1]
                   if (lastMessage && lastMessage.role === 'assistant') {
                     lastMessage.content = accumulatedContent
+                    // Mettre à jour les outputTokens basé sur la longueur du contenu
                     if (lastMessage.pricing) {
                       lastMessage.pricing.outputTokens = Math.floor(accumulatedContent.length / 4)
+                      // Recalculer le coût basé sur les tokens
                       lastMessage.pricing.cost = (lastMessage.pricing.inputTokens * 0.00001) + (lastMessage.pricing.outputTokens * 0.00003)
                     }
                   }
                   return newMessages
                 })
               } else if (data.type === 'metadata' && data.conversationId) {
+                // Mettre à jour l'ID de conversation si c'est une nouvelle conversation
                 if (!currentConversationId) {
                   setCurrentConversationId(data.conversationId)
-                  loadConversations()
+                  loadConversations() // Recharger la liste des conversations
                 } else {
+                  // Mettre à jour les coûts de la conversation existante
                   updateConversationCosts(data.conversationId)
                 }
               }
+              // On ignore les sources maintenant qu'elles ne sont plus affichées
             } catch (e) {
               console.error('Error parsing SSE data:', e, 'Line:', line)
             }
@@ -317,8 +334,10 @@ export default function ChatPage() {
       })
     } finally {
       setLoading(false)
+      // Émettre un événement pour notifier qu'un nouveau message a été envoyé
       window.dispatchEvent(new CustomEvent('newMessageSent'))
       
+      // Mettre à jour les coûts de la conversation courante
       if (currentConversationId) {
         updateConversationCosts(currentConversationId)
       }
@@ -327,6 +346,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex bg-gray-50 relative h-[calc(100vh-120px)] sm:h-[calc(100vh-140px)]">
+      {/* Sidebar Historique */}
       <AnimatePresence>
         {showHistory && (
           <motion.div
@@ -410,6 +430,7 @@ export default function ChatPage() {
         )}
       </AnimatePresence>
 
+      {/* Overlay pour mobile */}
       {showHistory && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-10 sm:hidden"
@@ -417,8 +438,11 @@ export default function ChatPage() {
         />
       )}
 
+      {/* Contenu principal */}
       <div className="flex-1 flex flex-col h-[calc(100vh-120px)] sm:h-[calc(100vh-140px)]">
+        {/* Zone des messages */}
         <div className="flex-1 overflow-y-auto pb-20 sm:pb-32 px-2 sm:px-4 lg:px-6 relative">
+          {/* Boutons intégrés en haut */}
           <div className="sticky top-0 z-10 flex justify-between sm:justify-end p-2 sm:p-4 bg-gradient-to-b from-gray-50 to-transparent">
             <button
               onClick={() => setShowHistory(!showHistory)}
@@ -430,12 +454,12 @@ export default function ChatPage() {
             <button
               onClick={createNewConversation}
               className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Nouveau</span>
-            </button>
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Nouveau</span>
+              </button>
+            </div>
           </div>
-          
           <div className="max-w-4xl mx-auto py-2 sm:py-6">
             {messages.length === 0 && !loading ? (
               <motion.div
@@ -494,33 +518,34 @@ export default function ChatPage() {
           </div>
         </div>
 
+        {/* Input Area */}
         <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white shadow-sm z-10">
           <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-6 py-3 sm:py-6">
-            <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="relative">
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Posez votre question..."
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3 sm:px-5 py-3 sm:py-4 pr-12 sm:pr-14 text-sm sm:text-base text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all duration-200"
-                  disabled={loading}
-                />
-                <button
-                  type="submit"
-                  disabled={loading || !input.trim()}
-                  className="absolute right-2 sm:right-3 rounded-lg bg-gray-900 px-3 sm:px-4 py-2 sm:py-2.5 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                >
-                  {loading ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </form>
+          <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="relative">
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Posez votre question..."
+                className="w-full rounded-xl border border-gray-300 bg-white px-3 sm:px-5 py-3 sm:py-4 pr-12 sm:pr-14 text-sm sm:text-base text-gray-900 placeholder-gray-400 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-all duration-200"
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="absolute right-2 sm:right-3 rounded-lg bg-gray-900 px-3 sm:px-4 py-2 sm:py-2.5 text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+              >
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </form>
           </div>
         </div>
       </div>

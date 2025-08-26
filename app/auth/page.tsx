@@ -199,7 +199,7 @@ export default function AuthPage() {
                             placeholder="votre@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="h-12 sm:h-14 px-4 text-base sm:text-lg bg-white border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all placeholder:text-gray-400 text-gray-900 font-medium"
+                            className="h-12 sm:h-14 px-4 text-base sm:text-lg bg-white border-2 border-gray-300 rounded-xl focus:border-gray-500 focus:ring-2 focus:ring-gray-200 transition-all placeholder:text-gray-400 text-gray-900 font-medium"
                             required
                           />
                         </div>
@@ -215,7 +215,7 @@ export default function AuthPage() {
                             placeholder="Mot de passe"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="h-12 sm:h-14 pl-4 pr-12 text-base sm:text-lg bg-white border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all placeholder:text-gray-400 text-gray-900 font-medium"
+                            className="h-12 sm:h-14 pl-4 pr-12 text-base sm:text-lg bg-white border-2 border-gray-300 rounded-xl focus:border-gray-500 focus:ring-2 focus:ring-gray-200 transition-all placeholder:text-gray-400 text-gray-900 font-medium"
                             required
                           />
                           <button
@@ -231,7 +231,7 @@ export default function AuthPage() {
                     <Button
                       onClick={handleSignUp}
                       disabled={loading}
-                      className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gray-900 hover:bg-gray-800 text-white rounded-xl shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? (
                         <div className="flex items-center gap-3">
@@ -257,7 +257,7 @@ export default function AuthPage() {
                             placeholder="votre@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="h-12 sm:h-14 px-4 text-base sm:text-lg rounded-xl border-2 border-gray-300 transition-all bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder:text-gray-400 text-gray-900 font-medium"
+                            className="h-12 sm:h-14 px-4 text-base sm:text-lg rounded-xl border-2 border-gray-300 transition-all bg-white focus:border-gray-500 focus:ring-2 focus:ring-gray-200 placeholder:text-gray-400 text-gray-900 font-medium"
                           />
                         </div>
                       </div>
@@ -277,7 +277,7 @@ export default function AuthPage() {
                             placeholder="Mot de passe"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="h-12 sm:h-14 pl-4 pr-12 text-base sm:text-lg rounded-xl border-2 border-gray-300 transition-all bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder:text-gray-400 text-gray-900 font-medium"
+                            className="h-12 sm:h-14 pl-4 pr-12 text-base sm:text-lg rounded-xl border-2 border-gray-300 transition-all bg-white focus:border-gray-500 focus:ring-2 focus:ring-gray-200 placeholder:text-gray-400 text-gray-900 font-medium"
                           />
                           <button
                             type="button"
@@ -292,7 +292,7 @@ export default function AuthPage() {
                     <Button
                       onClick={handleSignIn}
                       disabled={loading}
-                      className="w-full h-12 sm:h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-base sm:text-lg rounded-xl transition-all shadow-sm hover:shadow-md"
+                      className="w-full h-12 sm:h-14 bg-gray-900 hover:bg-gray-800 text-white font-semibold text-base sm:text-lg rounded-xl transition-all shadow-sm hover:shadow-md"
                     >
                       {loading ? "Connexion..." : "Se connecter"}
                     </Button>
