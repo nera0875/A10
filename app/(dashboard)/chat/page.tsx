@@ -252,7 +252,11 @@ export default function ChatPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }))
+        if (response.status === 503) {
+          throw new Error('Le service est temporairement indisponible. Veuillez vérifier la configuration OpenAI dans les paramètres.')
+        }
+        throw new Error(errorData.error || 'Failed to send message')
       }
 
       const reader = response.body?.getReader()
@@ -305,13 +309,33 @@ export default function ChatPage() {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur chat:', error)
       setMessages(prev => {
         const newMessages = [...prev]
         const lastMessage = newMessages[newMessages.length - 1]
         if (lastMessage && lastMessage.role === 'assistant') {
-          lastMessage.content = `Je rencontre une difficulté pour traiter votre demande. Pouvez-vous reformuler votre question ou réessayer ? Erreur: ${error}`
+          // Message d'erreur plus convivial selon le type d'erreur
+          if (error.message?.includes('OpenAI') || error.message?.includes('indisponible')) {
+            lastMessage.content = `⚠️ Le service de chat n'est pas disponible actuellement. 
+
+Il semble que la clé API OpenAI ne soit pas configurée. Pour utiliser le chat :
+
+1. Allez dans les **Paramètres** (menu de navigation)
+2. Configurez votre clé API OpenAI
+3. Testez la connexion
+
+Une fois configuré, vous pourrez utiliser le chat normalement.`
+          } else {
+            lastMessage.content = `Je rencontre une difficulté pour traiter votre demande. 
+
+Erreur: ${error.message || 'Erreur inconnue'}
+
+Vous pouvez :
+- Vérifier votre connexion internet
+- Réessayer dans quelques instants
+- Vérifier la configuration dans les paramètres`
+          }
         }
         return newMessages
       })
