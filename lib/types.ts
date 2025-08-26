@@ -29,6 +29,7 @@ export interface Chunk {
 }
 
 export interface ChatMessage {
+  id?: string
   role: 'user' | 'assistant'
   content: string
   sources?: Array<{
@@ -37,6 +38,14 @@ export interface ChatMessage {
     content: string
     similarity: number
   }>
+  pricing?: {
+    inputTokens: number
+    outputTokens: number
+    cost: number
+    cacheHit: boolean
+    cacheSavings?: number
+    model: string
+  }
 }
 
 export interface SearchResult {

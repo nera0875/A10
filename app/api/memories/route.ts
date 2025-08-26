@@ -1,5 +1,35 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import OpenAI from 'openai'
+import { logger } from '@/lib/logger'
+import { type ModelConfig } from '../config/route'
+import { calculateAndSaveUsage, interceptOpenAIUsage, forceUsageRecord } from '@/lib/usage-calculator'
+
+// Configuration par défaut locale
+const DEFAULT_CONFIG: ModelConfig = {
+  chatModel: 'gpt-4o',
+  embeddingModel: 'text-embedding-3-small',
+  systemPrompt: 'Tu es un assistant IA personnel qui aide l\'utilisateur en utilisant ses mémoires et documents personnels. Réponds de manière naturelle et utile.',
+  temperature: 0.7,
+  topP: 1,
+  maxTokens: 2000
+}
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+})
+
+// Helper pour charger la config utilisateur
+async function getUserConfig(supabase: any, userId: string): Promise<ModelConfig> {
+  const { data: configData } = await supabase
+    .from('user_configs')
+    .select('config')
+    .eq('user_id', userId)
+    .eq('config_type', 'model_settings')
+    .single()
+
+  return configData?.config || DEFAULT_CONFIG
+}
 
 export async function GET() {
   try {
@@ -40,11 +70,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Contenu requis' }, { status: 400 })
     }
 
+    logger.info(`Création mémoire pour ${user.email}`, { 
+      category: 'Memory', 
+      details: { content: content.substring(0, 50) + '...' } 
+    })
+
+    // Charger la configuration utilisateur
+    const userConfig = await getUserConfig(supabase, user.id)
+
+    // Générer l'embedding avec OpenAI
+    logger.info('Génération embedding pour la mémoire', { category: 'OpenAI' })
+    
+    const embeddingResponse = await openai.embeddings.create({
+      model: userConfig.embeddingModel,
+      input: content.trim(),
+    })
+
+    // Calcul automatique des coûts pour l'embedding
+    if (embeddingResponse.usage) {
+      await interceptOpenAIUsage(embeddingResponse, userConfig.embeddingModel, user.id, undefined)
+    } else {
+      // Estimation si pas d'usage retourné
+      const estimatedTokens = Math.ceil(content.trim().length / 4)
+      await forceUsageRecord(userConfig.embeddingModel, estimatedTokens, 0, user.id, undefined)
+    }
+
+    const embedding = embeddingResponse.data[0].embedding
+    logger.success('Embedding généré pour la mémoire', { category: 'OpenAI' })
+
     const { data, error } = await supabase
       .from('memories')
       .insert([{
         user_id: user.id,
         content: content.trim(),
+        embedding: embedding,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }])
@@ -53,8 +112,15 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error
 
+    logger.success(`Mémoire créée avec embedding`, { 
+      category: 'Memory', 
+      details: { id: data.id, user: user.email } 
+    })
+
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
+    const errorMsg = 'Erreur création mémoire: ' + (error as Error).message
+    logger.error(errorMsg, { category: 'Memory', details: { error: (error as Error).message } })
     console.error('Erreur POST memories:', error)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }
@@ -75,10 +141,39 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Contenu requis' }, { status: 400 })
     }
 
+    logger.info(`Mise à jour mémoire ${id}`, { 
+      category: 'Memory', 
+      details: { content: content.substring(0, 50) + '...' } 
+    })
+
+    // Charger la configuration utilisateur
+    const userConfig = await getUserConfig(supabase, user.id)
+
+    // Générer un nouvel embedding pour le contenu modifié
+    logger.info('Génération nouvel embedding pour la mémoire', { category: 'OpenAI' })
+    
+    const embeddingResponse = await openai.embeddings.create({
+      model: userConfig.embeddingModel,
+      input: content.trim(),
+    })
+
+    // Calcul automatique des coûts pour l'embedding
+    if (embeddingResponse.usage) {
+      await interceptOpenAIUsage(embeddingResponse, userConfig.embeddingModel, user.id, undefined)
+    } else {
+      // Estimation si pas d'usage retourné
+      const estimatedTokens = Math.ceil(content.trim().length / 4)
+      await forceUsageRecord(userConfig.embeddingModel, estimatedTokens, 0, user.id, undefined)
+    }
+
+    const embedding = embeddingResponse.data[0].embedding
+    logger.success('Nouvel embedding généré', { category: 'OpenAI' })
+
     const { data, error } = await supabase
       .from('memories')
       .update({
         content: content.trim(),
+        embedding: embedding,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -88,8 +183,15 @@ export async function PUT(request: NextRequest) {
 
     if (error) throw error
 
+    logger.success(`Mémoire mise à jour avec nouvel embedding`, { 
+      category: 'Memory', 
+      details: { id: data.id } 
+    })
+
     return NextResponse.json(data)
   } catch (error) {
+    const errorMsg = 'Erreur mise à jour mémoire: ' + (error as Error).message
+    logger.error(errorMsg, { category: 'Memory', details: { error: (error as Error).message } })
     console.error('Erreur PUT memories:', error)
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
   }

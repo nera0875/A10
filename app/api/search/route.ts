@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { calculateAndSaveUsage, interceptOpenAIUsage, forceUsageRecord } from '@/lib/usage-calculator'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -26,6 +27,33 @@ export async function POST(request: NextRequest) {
       model: 'text-embedding-3-small',
       input: query.trim(),
     })
+
+    // 🚀 CALCUL AUTOMATIQUE DES COÛTS POUR L'EMBEDDING
+    // Détection du cache RAG basée sur les résultats de recherche (sera calculée après)
+    let cacheHit = false
+    
+    if (embeddingResponse.usage) {
+      interceptOpenAIUsage(
+        embeddingResponse,
+        'text-embedding-3-small',
+        undefined, // pas de conversation pour la recherche
+        user.id,
+        '/api/search',
+        cacheHit // sera mis à jour après analyse des résultats
+      )
+    } else {
+      // Estimation si pas d'usage retourné
+      const estimatedTokens = Math.ceil(query.trim().length / 4)
+      forceUsageRecord(
+        'text-embedding-3-small',
+        estimatedTokens,
+        0,
+        undefined,
+        user.id,
+        '/api/search',
+        cacheHit
+      )
+    }
 
     const queryEmbedding = embeddingResponse.data[0].embedding
     const results = []
@@ -66,6 +94,44 @@ export async function POST(request: NextRequest) {
 
     // Trier par similarité
     results.sort((a, b) => b.similarity - a.similarity)
+    
+    // 🎯 DÉTECTION INTELLIGENTE DU CACHE HIT RAG POUR LA RECHERCHE
+    // Un cache hit est détecté si des résultats pertinents sont trouvés
+    const hasHighQualityResults = results.some(result => result.similarity > 0.7)
+    const hasMultipleResults = results.length >= 2
+    cacheHit = hasHighQualityResults && hasMultipleResults
+    
+    console.log('🎯 Analyse cache RAG pour recherche:', {
+      resultsCount: results.length,
+      hasHighQualityResults,
+      hasMultipleResults,
+      cacheHit,
+      topSimilarity: results.length > 0 ? results[0].similarity : 0
+    })
+    
+    // 🔄 MISE À JOUR DU CACHE HIT DANS LES STATISTIQUES
+    // Recalculer les coûts avec le cache hit correct
+    if (embeddingResponse.usage) {
+      interceptOpenAIUsage(
+        embeddingResponse,
+        'text-embedding-3-small',
+        undefined,
+        user.id,
+        '/api/search',
+        cacheHit // 🎯 Cache hit mis à jour
+      )
+    } else {
+      const estimatedTokens = Math.ceil(query.trim().length / 4)
+      forceUsageRecord(
+        'text-embedding-3-small',
+        estimatedTokens,
+        0,
+        undefined,
+        user.id,
+        '/api/search',
+        cacheHit // 🎯 Cache hit mis à jour
+      )
+    }
 
     return NextResponse.json(results.slice(0, limit))
   } catch (error) {

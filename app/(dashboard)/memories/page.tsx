@@ -21,19 +21,20 @@ export default function MemoriesPage() {
 
   const fetchMemories = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('memories')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
+      const response = await fetch('/api/memories')
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement des mémoires')
+      }
+      
+      const data = await response.json()
       setMemories(data || [])
     } catch (error) {
       console.error('Erreur lors du chargement des mémoires:', error)
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     fetchMemories()
@@ -74,32 +75,34 @@ export default function MemoriesPage() {
     if (!newMemory.trim()) return
 
     try {
-      let result
       if (editingMemory) {
-        result = await supabase
-          .from('memories')
-          .update({ 
-            content: newMemory,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingMemory.id)
+        // Mise à jour d'une mémoire existante
+        const response = await fetch('/api/memories', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            id: editingMemory.id,
+            content: newMemory
+          }),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Erreur lors de la mise à jour')
+        }
       } else {
-        result = await supabase
-          .from('memories')
-          .insert([{ content: newMemory }])
+        // Création d'une nouvelle mémoire
+        const response = await fetch('/api/memories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: newMemory }),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error || 'Erreur lors de la création')
+        }
       }
-
-      if (result.error) throw result.error
-
-      // Générer l'embedding pour la nouvelle mémoire
-      await fetch('/api/memories/embed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          content: newMemory,
-          memoryId: editingMemory?.id 
-        }),
-      })
 
       setNewMemory('')
       setEditingMemory(null)
@@ -107,6 +110,7 @@ export default function MemoriesPage() {
       fetchMemories()
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)
+      alert('Erreur: ' + (error as Error).message)
     }
   }
 
@@ -114,15 +118,19 @@ export default function MemoriesPage() {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette mémoire ?')) return
 
     try {
-      const { error } = await supabase
-        .from('memories')
-        .delete()
-        .eq('id', id)
+      const response = await fetch(`/api/memories?id=${id}`, {
+        method: 'DELETE',
+      })
 
-      if (error) throw error
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Erreur lors de la suppression')
+      }
+      
       fetchMemories()
     } catch (error) {
       console.error('Erreur lors de la suppression:', error)
+      alert('Erreur: ' + (error as Error).message)
     }
   }
 

@@ -121,7 +121,7 @@ CREATE OR REPLACE FUNCTION search_memories(
     query_embedding vector(1536),
     match_threshold float DEFAULT 0.5,
     match_count int DEFAULT 10,
-    user_id uuid DEFAULT NULL
+    target_user_id uuid DEFAULT NULL
 )
 RETURNS TABLE(
     id uuid,
@@ -142,7 +142,7 @@ AS $$
         memories.updated_at,
         memories.user_id
     FROM memories
-    WHERE (search_memories.user_id IS NULL OR memories.user_id = search_memories.user_id)
+    WHERE (target_user_id IS NULL OR memories.user_id = target_user_id)
         AND memories.embedding IS NOT NULL
         AND 1 - (memories.embedding <=> query_embedding) > match_threshold
     ORDER BY similarity DESC
@@ -154,7 +154,7 @@ CREATE OR REPLACE FUNCTION search_chunks(
     query_embedding vector(1536),
     match_threshold float DEFAULT 0.5,
     match_count int DEFAULT 10,
-    user_id uuid DEFAULT NULL
+    target_user_id uuid DEFAULT NULL
 )
 RETURNS TABLE(
     id uuid,
@@ -176,7 +176,7 @@ AS $$
         chunks.created_at
     FROM chunks
     JOIN documents ON chunks.document_id = documents.id
-    WHERE (search_chunks.user_id IS NULL OR documents.user_id = search_chunks.user_id)
+    WHERE (target_user_id IS NULL OR documents.user_id = target_user_id)
         AND chunks.embedding IS NOT NULL
         AND 1 - (chunks.embedding <=> query_embedding) > match_threshold
     ORDER BY similarity DESC
@@ -189,7 +189,7 @@ CREATE OR REPLACE FUNCTION hybrid_search_chunks(
     query_embedding vector(1536),
     match_threshold float DEFAULT 0.5,
     match_count int DEFAULT 10,
-    user_id uuid DEFAULT NULL
+    target_user_id uuid DEFAULT NULL
 )
 RETURNS TABLE(
     id uuid,
@@ -214,7 +214,7 @@ AS $$
             chunks.created_at
         FROM chunks
         JOIN documents ON chunks.document_id = documents.id
-        WHERE (hybrid_search_chunks.user_id IS NULL OR documents.user_id = hybrid_search_chunks.user_id)
+        WHERE (target_user_id IS NULL OR documents.user_id = target_user_id)
             AND chunks.embedding IS NOT NULL
             AND 1 - (chunks.embedding <=> query_embedding) > match_threshold
     ),
@@ -224,7 +224,7 @@ AS $$
             ts_rank(chunks.tsvector, plainto_tsquery('french', query_text)) as bm25_rank
         FROM chunks
         JOIN documents ON chunks.document_id = documents.id
-        WHERE (hybrid_search_chunks.user_id IS NULL OR documents.user_id = hybrid_search_chunks.user_id)
+        WHERE (target_user_id IS NULL OR documents.user_id = target_user_id)
             AND chunks.tsvector @@ plainto_tsquery('french', query_text)
     )
     SELECT 

@@ -4,6 +4,7 @@ import { chunkText } from '@/lib/utils'
 import OpenAI from 'openai'
 // @ts-ignore
 import pdf from 'pdf-parse'
+import { calculateAndSaveUsage, interceptOpenAIUsage, forceUsageRecord } from '@/lib/usage-calculator'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -79,6 +80,15 @@ export async function POST(request: NextRequest) {
           model: 'text-embedding-3-small',
           input: chunk,
         })
+
+        // Calcul automatique des coûts pour l'embedding
+        if (embeddingResponse.usage) {
+          await interceptOpenAIUsage(embeddingResponse, 'text-embedding-3-small', user.id, undefined)
+        } else {
+          // Estimation si pas d'usage retourné
+          const estimatedTokens = Math.ceil(chunk.length / 4)
+          await forceUsageRecord('text-embedding-3-small', estimatedTokens, 0, user.id, undefined)
+        }
 
         const embedding = embeddingResponse.data[0].embedding
         
