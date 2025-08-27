@@ -307,7 +307,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Étape 4 : Fallback final avec seuil très bas pour questions normales
-      if (!isPersonalInfoQuery && memories.length === 0 && chunks.length === 0 && ((memoriesCount.count ?? 0) > 0)) {
+      if (!isPersonalInfoQuery && ((memories.length === 0 && chunks.length === 0) || searchErrors.length > 0) && ((memoriesCount.count ?? 0) > 0)) {
         try {
           logger.warning('Dernière tentative avec seuil très bas', {
             category: 'Database',
