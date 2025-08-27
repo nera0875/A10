@@ -33,7 +33,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   sources?: Array<{
-    type: 'memory' | 'chunk'
+    type: 'memory' | 'chunk' | 'conversation'
     id: string
     content: string
     similarity: number
@@ -52,6 +52,42 @@ export interface SearchResult {
   id: string
   content: string
   similarity: number
-  type: 'memory' | 'chunk'
+  type: 'memory' | 'chunk' | 'conversation'
   metadata?: any
+}
+
+export interface Conversation {
+  id: string
+  user_id: string
+  title: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ConversationMessage {
+  id: string
+  conversation_id: string
+  role: 'user' | 'assistant'
+  content: string
+  embedding?: number[]
+  embedding_large?: number[]
+  embedding_model?: string
+  created_at: string
+}
+
+export interface ModelConfig {
+  chatModel: string
+  embeddingModel: string
+  systemPrompt: string
+  temperature: number
+  maxTokens: number
+  topP: number
+  rules?: any[]
+  defaultModel?: string
+}
+
+export interface ApiError {
+  error: string
+  details?: any
+  status?: number
 }

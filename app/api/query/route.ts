@@ -5,6 +5,8 @@ import { logger } from '@/lib/logger'
 import { type ModelConfig } from '../config/route'
 import { calculateAndSaveUsage, interceptOpenAIUsage, forceUsageRecord } from '@/lib/usage-calculator'
 import { ensureUserExists } from '@/lib/ensure-user'
+import { getModelConfig } from '@/lib/models-config'
+import { createErrorResponse, handleOpenAIError, handleSupabaseError, ApiError } from '@/lib/error-handler'
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -26,15 +28,13 @@ export async function POST(request: NextRequest) {
     
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
-      logger.error('Tentative d\'accès non autorisé à l\'API query', { category: 'Auth' })
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+      throw new ApiError('Non autorisé', 401, 'UNAUTHORIZED')
     }
 
     const { query, conversationId } = await request.json()
     
     if (!query?.trim()) {
-      logger.warning('Requête vide reçue', { category: 'API', details: { userId: user.id } })
-      return NextResponse.json({ error: 'Requête vide' }, { status: 400 })
+      throw new ApiError('Requête vide', 400, 'EMPTY_QUERY')
     }
 
     // Détecter les questions sur les informations personnelles qui nécessitent TOUTES les mémoires
@@ -95,8 +95,7 @@ export async function POST(request: NextRequest) {
         .single()
       
       if (conversationError) {
-        logger.error('Erreur création conversation', { category: 'Database', details: conversationError })
-        return NextResponse.json({ error: 'Erreur création conversation' }, { status: 500 })
+        throw handleSupabaseError(conversationError)
       }
       
       currentConversationId = newConversation.id
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest) {
     let queryEmbedding: number[] | null = null
     if (!shouldSkipMemorySearch) {
       if (!openai) {
-        return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
+        throw new ApiError('OpenAI API key not configured', 500, 'OPENAI_NOT_CONFIGURED')
       }
 
       // Générer l'embedding de la requête
@@ -122,9 +121,10 @@ export async function POST(request: NextRequest) {
       })
 
       queryEmbedding = embeddingResponse.data[0].embedding
+      const isLargeModel = userConfig.embeddingModel === 'text-embedding-3-large'
       logger.success('Embedding généré avec succès', { 
         category: 'OpenAI', 
-        details: { embeddingLength: queryEmbedding.length, model: userConfig.embeddingModel } 
+        details: { embeddingLength: queryEmbedding.length, model: userConfig.embeddingModel, isLargeModel } 
       })
 
       // Définir les paramètres de recherche selon le type de question
@@ -160,15 +160,19 @@ export async function POST(request: NextRequest) {
         }
       })
       
+      // Utiliser les nouvelles fonctions multi-embeddings
+      const isLargeEmbedding = userConfig.embeddingModel === 'text-embedding-3-large'
       const [memoriesResult, chunksResult] = await Promise.all([
-        supabase.rpc('search_memories', {
-          query_embedding: queryEmbedding,
+        supabase.rpc('search_memories_multi', {
+          query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
+          query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
           match_threshold: searchThreshold,
           match_count: searchCount,
           target_user_id: user.id
         }),
-        supabase.rpc('search_chunks', {
-          query_embedding: queryEmbedding,
+        supabase.rpc('search_chunks_multi', {
+          query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
+          query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
           match_threshold: searchThreshold,
           match_count: searchCount,
           target_user_id: user.id
@@ -226,14 +230,16 @@ export async function POST(request: NextRequest) {
           })
 
           const [lowThresholdMemories, lowThresholdChunks] = await Promise.all([
-            supabase.rpc('search_memories', {
-              query_embedding: queryEmbedding,
+            supabase.rpc('search_memories_multi', {
+              query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
+              query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
               match_threshold: 0.3,
               match_count: 3,
               target_user_id: user.id
             }),
-            supabase.rpc('search_chunks', {
-              query_embedding: queryEmbedding,
+            supabase.rpc('search_chunks_multi', {
+              query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
+              query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
               match_threshold: 0.3,
               match_count: 3,
               target_user_id: user.id
@@ -326,41 +332,7 @@ Réponds en utilisant le contexte fourni si pertinent. Ne mentionne jamais les s
       details: { sourcesCount: sourcesForResponse.length, model: userConfig.chatModel } 
     })
 
-    // Sauvegarder d'abord le message utilisateur pour qu'il soit inclus dans l'historique
-    try {
-      // Générer l'embedding pour le message utilisateur si pas déjà fait
-      let userEmbedding = queryEmbedding
-      if (!userEmbedding) {
-        if (!openai) {
-          throw new Error('OpenAI API key not configured')
-        }
-        const userEmbeddingResponse = await openai.embeddings.create({
-          model: userConfig.embeddingModel,
-          input: query.trim(),
-        })
-        userEmbedding = userEmbeddingResponse.data[0].embedding
-      }
-
-      // Sauvegarder le message utilisateur
-      await supabase.from('conversation_messages').insert({
-        conversation_id: currentConversationId,
-        role: 'user',
-        content: query,
-        embedding: userEmbedding
-      })
-
-      logger.info('Message utilisateur sauvegardé', {
-        category: 'Database',
-        details: { conversationId: currentConversationId }
-      })
-    } catch (saveError: any) {
-      logger.error('Erreur sauvegarde message utilisateur', {
-        category: 'Database',
-        details: { error: saveError.message, conversationId: currentConversationId }
-      })
-    }
-
-    // Maintenant récupérer l'historique de la conversation (qui inclut le message utilisateur)
+    // Récupérer d'abord l'historique de la conversation AVANT d'ajouter le nouveau message
     const { data: conversationHistory } = await supabase.rpc('get_recent_conversation_messages', {
       conversation_id_param: currentConversationId,
       message_count: 10
@@ -385,7 +357,7 @@ Réponds en utilisant le contexte fourni si pertinent. Ne mentionne jamais les s
       // Trier par created_at pour s'assurer de l'ordre chronologique
       const sortedMessages = recentMessages.sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
       
-      // Inclure TOUS les messages de l'historique car le message utilisateur actuel n'y est pas encore
+      // Ajouter tous les messages de l'historique
       for (const msg of sortedMessages) {
         messages.push({
           role: msg.role,
@@ -409,23 +381,31 @@ Réponds en utilisant le contexte fourni si pertinent. Ne mentionne jamais les s
     }
 
     // Configuration des paramètres selon le modèle
-    if (userConfig.chatModel.includes('gpt-4o')) {
-      // GPT-4o supporte temperature=1 par défaut
-      completionParams.temperature = 1
-      completionParams.max_tokens = userConfig.maxTokens
-    } else if (userConfig.chatModel.includes('gpt-5')) {
-      // GPT-5 utilise max_completion_tokens au lieu de max_tokens
-      completionParams.temperature = 1
-      completionParams.max_completion_tokens = userConfig.maxTokens
+    const modelConfig = getModelConfig(userConfig.chatModel)
+    if (modelConfig) {
+      // Appliquer la température appropriée
+      if (modelConfig.supportsTemperature) {
+        completionParams.temperature = userConfig.temperature
+        completionParams.top_p = userConfig.topP
+      } else {
+        completionParams.temperature = modelConfig.fixedTemperature || 1
+        // Ne pas inclure top_p pour les modèles avec température fixe
+      }
+      
+      // Utiliser la bonne clé pour max tokens
+      completionParams[modelConfig.maxTokensKey] = userConfig.maxTokens
     } else {
-      // Pour les autres modèles (gpt-4-turbo, gpt-4, gpt-3.5-turbo)
+      // Fallback pour les modèles non configurés
+      logger.warning(`Modèle non configuré: ${userConfig.chatModel}, utilisation des paramètres par défaut`, {
+        category: 'Config'
+      })
       completionParams.temperature = userConfig.temperature
       completionParams.top_p = userConfig.topP
       completionParams.max_tokens = userConfig.maxTokens
     }
 
     if (!openai) {
-      return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 })
+      throw new ApiError('OpenAI API key not configured', 500, 'OPENAI_NOT_CONFIGURED')
     }
 
     let completion
@@ -433,20 +413,7 @@ Réponds en utilisant le contexte fourni si pertinent. Ne mentionne jamais les s
     try {
       completion = await openai.chat.completions.create(completionParams)
     } catch (openaiError: any) {
-      logger.error('Erreur lors de l\'appel à OpenAI', {
-        category: 'OpenAI',
-        details: {
-          model: userConfig.chatModel,
-          error: openaiError.message,
-          status: openaiError.status,
-          code: openaiError.code
-        }
-      })
-      
-      // Retourner une erreur appropriée
-      return NextResponse.json({ 
-        error: `Erreur du modèle ${userConfig.chatModel}: ${openaiError.message}` 
-      }, { status: 500 })
+      throw handleOpenAIError(openaiError)
     }
 
     // Créer un stream de réponse
@@ -534,8 +501,33 @@ Réponds en utilisant le contexte fourni si pertinent. Ne mentionne jamais les s
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`))
           controller.close()
 
-          // Sauvegarder seulement la réponse de l'assistant (le message utilisateur a déjà été sauvegardé)
+          // Sauvegarder les messages de la conversation
           try {
+            // Sauvegarder d'abord le message utilisateur
+            let userEmbedding = queryEmbedding
+            if (!userEmbedding) {
+              if (!openai) {
+                throw new Error('OpenAI API key not configured')
+              }
+              const userEmbeddingResponse = await openai.embeddings.create({
+                model: userConfig.embeddingModel,
+                input: query.trim(),
+              })
+              userEmbedding = userEmbeddingResponse.data[0].embedding
+            }
+
+            const isLargeEmbedding = userConfig.embeddingModel === 'text-embedding-3-large'
+            
+            // Sauvegarder le message utilisateur
+            await supabase.from('conversation_messages').insert({
+              conversation_id: currentConversationId,
+              role: 'user',
+              content: query,
+              embedding: isLargeEmbedding ? null : userEmbedding,
+              embedding_large: isLargeEmbedding ? userEmbedding : null,
+              embedding_model: userConfig.embeddingModel
+            })
+
             // Générer l'embedding pour la réponse de l'assistant
             const assistantEmbeddingResponse = await openai.embeddings.create({
               model: userConfig.embeddingModel,
@@ -544,11 +536,14 @@ Réponds en utilisant le contexte fourni si pertinent. Ne mentionne jamais les s
             const assistantEmbedding = assistantEmbeddingResponse.data[0].embedding
 
             // Sauvegarder la réponse de l'assistant
+            const isLargeEmbeddingAssistant = userConfig.embeddingModel === 'text-embedding-3-large'
             await supabase.from('conversation_messages').insert({
               conversation_id: currentConversationId,
               role: 'assistant',
               content: fullAnswer,
-              embedding: assistantEmbedding
+              embedding: isLargeEmbeddingAssistant ? null : assistantEmbedding,
+              embedding_large: isLargeEmbeddingAssistant ? assistantEmbedding : null,
+              embedding_model: userConfig.embeddingModel
             })
 
             logger.success('Réponse de l\'assistant sauvegardée dans l\'historique', {
@@ -710,17 +705,6 @@ Réponds en utilisant le contexte fourni si pertinent. Ne mentionne jamais les s
       },
     })
   } catch (error: any) {
-    const errorMessage = 'Erreur requête RAG: ' + (error.message || 'Erreur inconnue')
-    logger.error(errorMessage, { 
-      category: 'API', 
-      details: { 
-        error: error.message, 
-        stack: error.stack,
-        status: error.status 
-      } 
-    })
-    
-    console.error('Erreur requête RAG:', error)
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 })
+    return createErrorResponse(error, 'Erreur lors du traitement de votre requête')
   }
 }
