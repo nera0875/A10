@@ -83,7 +83,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Générer l'embedding avec OpenAI
-    logger.info('Génération embedding pour la mémoire', { category: 'OpenAI' })
+    logger.info('Génération embedding pour la mémoire', { 
+      category: 'OpenAI',
+      details: { model: userConfig.embeddingModel }
+    })
     
     const embeddingResponse = await openai.embeddings.create({
       model: userConfig.embeddingModel,
@@ -102,15 +105,25 @@ export async function POST(request: NextRequest) {
     const embedding = embeddingResponse.data[0].embedding
     logger.success('Embedding généré pour la mémoire', { category: 'OpenAI' })
 
+    // Préparer les données d'insertion selon le modèle d'embedding
+    const insertData: any = {
+      user_id: user.id,
+      content: content.trim(),
+      embedding_model: userConfig.embeddingModel,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    // Assigner l'embedding à la bonne colonne selon le modèle
+    if (userConfig.embeddingModel === 'text-embedding-3-large') {
+      insertData.embedding_large = embedding
+    } else {
+      insertData.embedding = embedding
+    }
+
     const { data, error } = await supabase
       .from('memories')
-      .insert([{
-        user_id: user.id,
-        content: content.trim(),
-        embedding: embedding,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }])
+      .insert([insertData])
       .select()
       .single()
 
@@ -158,7 +171,10 @@ export async function PUT(request: NextRequest) {
     }
 
     // Générer un nouvel embedding pour le contenu modifié
-    logger.info('Génération nouvel embedding pour la mémoire', { category: 'OpenAI' })
+    logger.info('Génération nouvel embedding pour la mémoire', { 
+      category: 'OpenAI',
+      details: { model: userConfig.embeddingModel }
+    })
     
     const embeddingResponse = await openai.embeddings.create({
       model: userConfig.embeddingModel,
@@ -177,13 +193,25 @@ export async function PUT(request: NextRequest) {
     const embedding = embeddingResponse.data[0].embedding
     logger.success('Nouvel embedding généré', { category: 'OpenAI' })
 
+    // Préparer les données de mise à jour selon le modèle d'embedding
+    const updateData: any = {
+      content: content.trim(),
+      embedding_model: userConfig.embeddingModel,
+      updated_at: new Date().toISOString()
+    }
+
+    // Assigner l'embedding à la bonne colonne selon le modèle
+    if (userConfig.embeddingModel === 'text-embedding-3-large') {
+      updateData.embedding_large = embedding
+      updateData.embedding = null // Nettoyer l'ancien si on passe au large
+    } else {
+      updateData.embedding = embedding
+      updateData.embedding_large = null // Nettoyer l'ancien si on revient au small
+    }
+
     const { data, error } = await supabase
       .from('memories')
-      .update({
-        content: content.trim(),
-        embedding: embedding,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .eq('user_id', user.id)
       .select()
