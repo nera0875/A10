@@ -24,6 +24,7 @@ Votre LLM ne récupère que 2 éléments au lieu de toutes vos mémoires à caus
 
 3. **Vérifiez l'exécution**
    - Vous devriez voir des messages comme "Migration terminée - Mémoires: X, Chunks: Y"
+   - Le script a été corrigé suite à la review pour éliminer les erreurs de syntaxe SQL
    - Si des erreurs apparaissent, relancez le script (il est idempotent)
 
 ### Étape 2 : Redémarrer l'application
