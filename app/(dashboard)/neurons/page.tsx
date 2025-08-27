@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { requiresFixedTemperature, getModelConfig } from '@/lib/models-config'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -387,18 +388,17 @@ export default function NeuronsPage() {
       chatModel: modelId
     }
     
-    // Forcer temperature=1 pour GPT-4o et GPT-5
-    if (modelId.includes('gpt-4o') || modelId.includes('gpt-5')) {
-      newConfig.temperature = 1
+    // Appliquer la température fixe si nécessaire
+    const modelConfig = getModelConfig(modelId)
+    if (modelConfig && !modelConfig.supportsTemperature) {
+      newConfig.temperature = modelConfig.fixedTemperature || 1
     }
     
     setConfig(newConfig)
   }
 
-  // Vérifier si le modèle nécessite temperature=1
-  const requiresFixedTemperature = (modelId: string) => {
-    return modelId.includes('gpt-4o') || modelId.includes('gpt-5')
-  }
+  // Utiliser la fonction importée pour vérifier la température fixe
+  const modelRequiresFixedTemp = (modelId: string) => requiresFixedTemperature(modelId)
 
   // Gérer le changement de modèle
   const handleModelChange = (modelId: string) => {
@@ -407,9 +407,10 @@ export default function NeuronsPage() {
       chatModel: modelId
     }
     
-    // Forcer temperature=1 pour GPT-4o et GPT-5
-    if (requiresFixedTemperature(modelId)) {
-      newConfig.temperature = 1
+    // Appliquer la température fixe si nécessaire
+    const modelConfig = getModelConfig(modelId)
+    if (modelConfig && !modelConfig.supportsTemperature) {
+      newConfig.temperature = modelConfig.fixedTemperature || 1
     }
     
     setConfig(newConfig)
@@ -838,7 +839,7 @@ export default function NeuronsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {requiresFixedTemperature(config.chatModel) && (
+                  {modelRequiresFixedTemp(config.chatModel) && (
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
                       <div className="flex items-center gap-2 text-amber-800">
                         <AlertTriangle className="h-4 w-4" />
@@ -856,8 +857,8 @@ export default function NeuronsPage() {
                     step="0.1"
                     value={config.temperature}
                     onChange={(e) => setConfig({...config, temperature: parseFloat(e.target.value)})}
-                    disabled={requiresFixedTemperature(config.chatModel)}
-                    className={requiresFixedTemperature(config.chatModel) ? 'opacity-50 cursor-not-allowed' : ''}
+                    disabled={modelRequiresFixedTemp(config.chatModel)}
+                    className={modelRequiresFixedTemp(config.chatModel) ? 'opacity-50 cursor-not-allowed' : ''}
                   />
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Précis (0.0)</span>
