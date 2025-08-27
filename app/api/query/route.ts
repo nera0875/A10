@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Détecter les questions sur les informations personnelles qui nécessitent TOUTES les mémoires
-    const isPersonalInfoQuery = /(qu'est-ce que tu connais sur moi|que sais-tu de moi|quelles sont mes informations|mes dernières mémoires|mes mémoires|que connais-tu de moi|dis-moi ce que tu sais sur moi|quelles informations as-tu sur moi)/i.test(query.trim())
+    const isPersonalInfoQuery = /(qu'est-ce que tu connais sur moi|que sais-tu de moi|quelles sont mes informations|mes dernières mémoires|mes mémoires|que connais-tu de moi|dis-moi ce que tu sais sur moi|quelles informations as-tu sur moi|raconte-moi ce que tu sais|parle-moi de moi|résume mes infos|toutes mes mémoires|liste mes mémoires|mes données|informations personnelles|profil personnel)/i.test(query.trim())
     
     // Détecter les salutations simples et autres requêtes qui ne nécessitent pas de recherche sémantique
     const isSimpleGreeting = /^(bonjour|salut|hello|hi|bonsoir|bonne nuit|coucou|hey)\s*[!.?]*$/i.test(query.trim())
@@ -160,37 +160,190 @@ export async function POST(request: NextRequest) {
         }
       })
       
-      // Utiliser les nouvelles fonctions multi-embeddings
+      // Fonction robuste de recherche avec plusieurs fallbacks
+      let memories = []
+      let chunks = []
+      let searchErrors = []
+
       const isLargeEmbedding = userConfig.embeddingModel === 'text-embedding-3-large'
-      const [memoriesResult, chunksResult] = await Promise.all([
-        supabase.rpc('search_memories_multi', {
-          query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
-          query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
-          match_threshold: searchThreshold,
-          match_count: searchCount,
-          target_user_id: user.id
-        }),
-        supabase.rpc('search_chunks_multi', {
-          query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
-          query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
-          match_threshold: searchThreshold,
-          match_count: searchCount,
-          target_user_id: user.id
+      
+      // Étape 1 : Essayer la recherche avec les nouvelles fonctions multi-embeddings
+      try {
+        logger.info('Tentative de recherche avec fonctions multi-embeddings', {
+          category: 'Database',
+          details: { isLargeEmbedding, threshold: searchThreshold, count: searchCount }
         })
-      ])
 
-      const memories = memoriesResult.data || []
-      const chunks = chunksResult.data || []
+        const [memoriesResult, chunksResult] = await Promise.all([
+          supabase.rpc('search_memories_multi', {
+            query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
+            query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
+            match_threshold: searchThreshold,
+            match_count: searchCount,
+            target_user_id: user.id
+          }),
+          supabase.rpc('search_chunks_multi', {
+            query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
+            query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
+            match_threshold: searchThreshold,
+            match_count: searchCount,
+            target_user_id: user.id
+          })
+        ])
 
-      logger.info(`Résultats de recherche: ${memories.length} mémoires, ${chunks.length} chunks`, { 
+        if (memoriesResult.error) {
+          searchErrors.push(`Memories multi error: ${memoriesResult.error.message}`)
+        } else {
+          memories = memoriesResult.data || []
+        }
+
+        if (chunksResult.error) {
+          searchErrors.push(`Chunks multi error: ${chunksResult.error.message}`)
+        } else {
+          chunks = chunksResult.data || []
+        }
+
+        logger.info(`Résultats recherche multi: ${memories.length} mémoires, ${chunks.length} chunks`, {
+          category: 'Database',
+          details: { 
+            memoriesCount: memories.length,
+            chunksCount: chunks.length,
+            errors: searchErrors.length > 0 ? searchErrors : null
+          }
+        })
+
+      } catch (error: any) {
+        searchErrors.push(`Multi-embedding search failed: ${error?.message || String(error)}`)
+        logger.error('Erreur recherche multi-embeddings', {
+          category: 'Database',
+          details: { error: error?.message || String(error) }
+        })
+      }
+
+      // Étape 2 : Fallback vers les fonctions de recherche classiques si multi échoue
+      if ((memories.length === 0 && chunks.length === 0) || searchErrors.length > 0) {
+        try {
+          logger.warning('Fallback vers recherche classique', {
+            category: 'Database',
+            details: { errors: searchErrors }
+          })
+
+          const [classicMemoriesResult, classicChunksResult] = await Promise.all([
+            supabase.rpc('search_memories', {
+              query_embedding: queryEmbedding,
+              match_threshold: Math.min(searchThreshold, 0.4), // Seuil plus permissif
+              match_count: searchCount,
+              target_user_id: user.id
+            }),
+            supabase.rpc('search_chunks', {
+              query_embedding: queryEmbedding,
+              match_threshold: Math.min(searchThreshold, 0.4),
+              match_count: searchCount,
+              target_user_id: user.id
+            })
+          ])
+
+          if (!classicMemoriesResult.error && classicMemoriesResult.data) {
+            memories = classicMemoriesResult.data.map((m: any) => ({...m, user_id: user.id}))
+          }
+          if (!classicChunksResult.error && classicChunksResult.data) {
+            chunks = classicChunksResult.data
+          }
+
+          logger.info(`Résultats recherche classique: ${memories.length} mémoires, ${chunks.length} chunks`, {
+            category: 'Database'
+          })
+
+        } catch (classicError: any) {
+          searchErrors.push(`Classic search failed: ${classicError?.message || String(classicError)}`)
+          logger.error('Erreur recherche classique', {
+            category: 'Database',
+            details: { error: classicError?.message || String(classicError) }
+          })
+        }
+      }
+
+      // Étape 3 : Pour les questions personnelles, récupérer toutes les mémoires si nécessaire
+      if (isPersonalInfoQuery && memories.length === 0) {
+        try {
+          logger.info('Question personnelle détectée, récupération de toutes les mémoires', {
+            category: 'Database',
+            details: { totalMemoriesAvailable: memoriesCount.count }
+          })
+
+          const allMemoriesResult = await supabase.rpc('get_all_user_memories', {
+            target_user_id: user.id,
+            memory_limit: 25
+          })
+
+          if (!allMemoriesResult.error && allMemoriesResult.data) {
+            memories = allMemoriesResult.data
+            logger.info(`Récupération de toutes les mémoires: ${memories.length} mémoires`, {
+              category: 'Database'
+            })
+          } else if (allMemoriesResult.error) {
+            // Dernier fallback : requête directe
+            const directResult = await supabase
+              .from('memories')
+              .select('id, content, created_at, updated_at, user_id')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false })
+              .limit(25)
+
+            if (!directResult.error && directResult.data) {
+              memories = directResult.data.map(m => ({...m, similarity: 1.0}))
+              logger.info(`Fallback direct: ${memories.length} mémoires`, {
+                category: 'Database'
+              })
+            }
+          }
+        } catch (personalError: any) {
+          searchErrors.push(`Personal info fallback failed: ${personalError?.message || String(personalError)}`)
+          logger.error('Erreur récupération mémoires personnelles', {
+            category: 'Database',
+            details: { error: personalError?.message || String(personalError) }
+          })
+        }
+      }
+
+      // Étape 4 : Fallback final avec seuil très bas pour questions normales
+      if (!isPersonalInfoQuery && memories.length === 0 && chunks.length === 0 && ((memoriesCount.count ?? 0) > 0)) {
+        try {
+          logger.warning('Dernière tentative avec seuil très bas', {
+            category: 'Database',
+            details: { threshold: 0.1 }
+          })
+
+          const veryLowThresholdResult = await supabase.rpc('search_memories', {
+            query_embedding: queryEmbedding,
+            match_threshold: 0.1, // Très permissif
+            match_count: 5,
+            target_user_id: user.id
+          })
+
+          if (!veryLowThresholdResult.error && veryLowThresholdResult.data) {
+            memories = veryLowThresholdResult.data.map((m: any) => ({...m, user_id: user.id}))
+            logger.info(`Résultats seuil très bas: ${memories.length} mémoires`, {
+              category: 'Database'
+            })
+          }
+        } catch (lowThresholdError: any) {
+          searchErrors.push(`Low threshold search failed: ${lowThresholdError?.message || String(lowThresholdError)}`)
+          logger.error('Erreur recherche seuil bas', {
+            category: 'Database',
+            details: { error: lowThresholdError?.message || String(lowThresholdError) }
+          })
+        }
+      }
+
+      // Logging final des résultats
+      logger.info(`Résultats finaux de recherche: ${memories.length} mémoires, ${chunks.length} chunks`, { 
         category: 'Database',
         details: { 
           memoriesCount: memories.length, 
           chunksCount: chunks.length,
-          memoriesError: memoriesResult.error?.message,
-          chunksError: chunksResult.error?.message,
-          memoriesErrorDetails: memoriesResult.error?.details,
-          chunksErrorDetails: chunksResult.error?.details,
+          totalErrors: searchErrors.length,
+          errors: searchErrors.length > 0 ? searchErrors : null,
           totalDataAvailable: {
             memories: memoriesCount.count,
             chunks: chunksCount.count
@@ -198,82 +351,52 @@ export async function POST(request: NextRequest) {
         } 
       })
 
-      // Si aucun résultat mais des données existent, essayer avec un seuil plus bas
-      if (memories.length === 0 && chunks.length === 0 && ((memoriesCount.count ?? 0) > 0 || (chunksCount.count ?? 0) > 0)) {
-        if (isPersonalInfoQuery) {
-          // Pour les questions personnelles, récupérer TOUTES les mémoires disponibles
-          logger.warning('Question personnelle sans résultats, récupération de toutes les mémoires', {
-            category: 'Database',
-            details: { totalMemoriesAvailable: memoriesCount.count }
-          })
-
-          const [allMemoriesResult] = await Promise.all([
-            supabase
-              .from('memories')
-              .select('id, content, created_at, 1 as similarity')
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false })
-              .limit(20)
-          ])
-
-          if (allMemoriesResult.data) {
-            memories.push(...allMemoriesResult.data)
-            logger.info(`Récupération de toutes les mémoires: ${allMemoriesResult.data.length} mémoires`, {
-              category: 'Database'
-            })
-          }
-        } else {
-          // Pour les autres questions, utiliser un seuil plus bas
-          logger.warning('Aucun résultat avec seuil standard, tentative avec seuil plus bas', {
-            category: 'Database',
-            details: { newThreshold: 0.3 }
-          })
-
-          const [lowThresholdMemories, lowThresholdChunks] = await Promise.all([
-            supabase.rpc('search_memories_multi', {
-              query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
-              query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
-              match_threshold: 0.3,
-              match_count: 3,
-              target_user_id: user.id
-            }),
-            supabase.rpc('search_chunks_multi', {
-              query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
-              query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
-              match_threshold: 0.3,
-              match_count: 3,
-              target_user_id: user.id
-            })
-          ])
-
-          memories.push(...(lowThresholdMemories.data || []))
-          chunks.push(...(lowThresholdChunks.data || []))
-
-          logger.info(`Résultats avec seuil bas: ${lowThresholdMemories.data?.length || 0} mémoires, ${lowThresholdChunks.data?.length || 0} chunks`, {
-            category: 'Database',
-            details: {
-              lowThresholdMemoriesError: lowThresholdMemories.error?.message,
-              lowThresholdChunksError: lowThresholdChunks.error?.message
-            }
-          })
-        }
-      }
-
-      // Recherche dans l'historique des conversations si on a un embedding
+      // Recherche dans l'historique des conversations avec fallback robuste
       let conversationHistory = []
       if (queryEmbedding) {
-        const { data: historyResults } = await supabase.rpc('search_conversation_messages', {
-          query_embedding: queryEmbedding,
-          conversation_id_filter: null, // Rechercher dans toutes les conversations
-          match_threshold: 0.7,
-          match_count: 5
-        })
-        
-        conversationHistory = historyResults || []
-        logger.info(`Recherche sémantique dans l'historique: ${conversationHistory.length} messages pertinents`, { 
-          category: 'Database', 
-          details: { semanticHistoryCount: conversationHistory.length } 
-        })
+        try {
+          // Essayer d'abord avec les nouvelles fonctions multi-embeddings
+          const historyResult = await supabase.rpc('search_conversation_messages_multi', {
+            query_embedding_small: isLargeEmbedding ? null : queryEmbedding,
+            query_embedding_large: isLargeEmbedding ? queryEmbedding : null,
+            conversation_id_filter: null, // Rechercher dans toutes les conversations
+            match_threshold: 0.6, // Seuil un peu plus permissif
+            match_count: 5
+          })
+
+          if (!historyResult.error && historyResult.data) {
+            conversationHistory = historyResult.data
+          } else if (historyResult.error) {
+            // Fallback vers la fonction classique
+            logger.warning('Fallback vers recherche conversation classique', {
+              category: 'Database',
+              details: { error: historyResult.error.message }
+            })
+
+            const classicHistoryResult = await supabase.rpc('search_conversation_messages', {
+              query_embedding: queryEmbedding,
+              conversation_id_filter: null,
+              match_threshold: 0.6,
+              match_count: 5
+            })
+
+            if (!classicHistoryResult.error && classicHistoryResult.data) {
+              conversationHistory = classicHistoryResult.data
+            }
+          }
+
+          logger.info(`Recherche sémantique dans l'historique: ${conversationHistory.length} messages pertinents`, { 
+            category: 'Database', 
+            details: { semanticHistoryCount: conversationHistory.length } 
+          })
+
+        } catch (historyError: any) {
+          logger.error('Erreur recherche historique conversations', {
+            category: 'Database',
+            details: { error: historyError?.message || String(historyError) }
+          })
+          conversationHistory = [] // Continuer sans l'historique
+        }
       }
 
       // Combiner et trier les résultats
